@@ -1,25 +1,54 @@
-import { NavLink, Outlet } from "react-router";
+import { Flame } from "lucide-react";
+import { Link, NavLink, Outlet } from "react-router";
 import { requireUser } from "~/lib/auth";
+import { currentUser } from "~/lib/mock-data";
+import { SiteLogo, ThemeToggle } from "~/components/bits";
+import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 
 export function loader() {
   requireUser();
   return null;
 }
 
+function navClass({ isActive }: { isActive: boolean }) {
+  return isActive
+    ? "text-sm font-semibold text-foreground underline decoration-2 underline-offset-8"
+    : "text-sm font-medium text-muted-foreground hover:text-foreground";
+}
+
 export default function StudentLayout() {
   return (
     <div className="min-h-svh">
-      <header className="border-b">
-        <nav className="mx-auto flex max-w-4xl items-center gap-4 p-4">
-          <span className="font-semibold">Courses</span>
-          <NavLink to="/app/courses" className="text-sm text-muted-foreground">
-            Browse
+      <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
+        <nav className="mx-auto flex h-14 max-w-[1120px] items-center gap-6 px-8">
+          <Link to="/app/courses">
+            <SiteLogo />
+          </Link>
+          <NavLink to="/app/courses" className={navClass}>
+            Courses
           </NavLink>
+          <NavLink to="/app/leaderboard" className={navClass}>
+            Leaderboard
+          </NavLink>
+
+          <div className="ml-auto flex items-center gap-2.5">
+            <span className="rounded-md bg-muted px-2.5 py-1 font-mono text-xs font-medium text-muted-foreground">
+              {currentUser.points} pts
+            </span>
+            <span className="flex items-center gap-1 rounded-md bg-success-soft px-2.5 py-1 font-mono text-xs font-medium text-success-soft-foreground">
+              <Flame className="size-3.5" />
+              {currentUser.streak}
+            </span>
+            <ThemeToggle />
+            <Link to="/app/profile" aria-label="Your profile">
+              <Avatar className="size-8">
+                <AvatarFallback className="font-mono text-xs">{currentUser.initials}</AvatarFallback>
+              </Avatar>
+            </Link>
+          </div>
         </nav>
       </header>
-      <main className="mx-auto max-w-4xl p-4">
-        <Outlet />
-      </main>
+      <Outlet />
     </div>
   );
 }
