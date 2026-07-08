@@ -13,7 +13,7 @@ import { Progress } from "~/components/ui/progress";
 import { Textarea } from "~/components/ui/textarea";
 
 export function meta() {
-  return [{ title: "Tu perfil · CodeClass" }];
+  return [{ title: "Tu perfil · Programación Avanzada" }];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {

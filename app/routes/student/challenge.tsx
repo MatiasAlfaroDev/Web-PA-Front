@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, Lock, Play, X } from "lucide-react";
-import { Link, useFetcher } from "react-router";
+import { ArrowLeft, Check, EyeOff, Lock, Play, X } from "lucide-react";
+import { Link, useFetcher, useRouteLoaderData } from "react-router";
 import CodeEditor from "react-simple-code-editor";
 import Prism from "prismjs";
 import "prismjs/components/prism-java";
@@ -10,19 +10,61 @@ import "prismjs/components/prism-java";
 const Editor = ((CodeEditor as any).default ?? CodeEditor) as typeof CodeEditor;
 import type { Route } from "./+types/challenge";
 import { api, apiResult } from "~/lib/api";
-import { getTokenOrRedirect } from "~/lib/auth";
+import { fullName, getTokenOrRedirect, type User } from "~/lib/auth";
 import { mapChallengeDetail, type ApiChallenge, type ApiCourse } from "~/lib/mappers";
 import type { Submission } from "../submission-status";
 import { Button } from "~/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
 import { cn } from "~/lib/utils";
 
+// Best-effort deterrents only — no web API can block PrintScreen, OS/phone
+// screen recording, or a second device's camera. This raises the friction of
+// casual copying and makes leaked screenshots traceable; it is not a security
+// boundary.
+const blockClipboard = (e: { preventDefault: () => void }) => e.preventDefault();
+
+function Watermark({ label }: { label: string }) {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none">
+      <div className="grid -rotate-[20deg] grid-cols-3 gap-16 p-8 opacity-[0.06]" style={{ width: "140%", height: "140%" }}>
+        {Array.from({ length: 24 }).map((_, i) => (
+          <span key={i} className="whitespace-nowrap text-sm font-semibold">
+            {label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Blurs the challenge while the tab/window isn't focused — a deterrent
+// against screen-sharing or handing the screen to someone else mid-challenge.
+// Purely client-side: nothing is logged or sent anywhere.
+function useTabFocusGuard() {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    const update = () => setHidden(document.hidden || !document.hasFocus());
+    document.addEventListener("visibilitychange", update);
+    window.addEventListener("blur", update);
+    window.addEventListener("focus", update);
+    return () => {
+      document.removeEventListener("visibilitychange", update);
+      window.removeEventListener("blur", update);
+      window.removeEventListener("focus", update);
+    };
+  }, []);
+  return hidden;
+}
+
 const highlightJava = (code: string) => Prism.highlight(code, Prism.languages.java, "java");
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const token = await getTokenOrRedirect(request);
-  const challenge = await api<ApiChallenge>(`/challenges/${params.challengeId}`, { token });
-  const course = await api<ApiCourse>(`/courses/${challenge.course_id}`, { token });
+  // courseId comes from the URL now, so these no longer have to run in sequence.
+  const [challenge, course] = await Promise.all([
+    api<ApiChallenge>(`/challenges/${params.challengeId}`, { token }),
+    api<ApiCourse>(`/courses/${params.courseId}`, { token }),
+  ]);
   return { challenge: mapChallengeDetail(challenge, course) };
 }
 
@@ -42,7 +84,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export function meta() {
-  return [{ title: "Desafío · CodeClass" }];
+  return [{ title: "Desafío · Programación Avanzada" }];
 }
 
 // Minimal markdown-lite: ``` fences become code blocks; # / ## become headings;
@@ -105,6 +147,11 @@ const TERMINAL = ["passed", "partial", "failed", "error"];
 export default function Challenge({ loaderData }: Route.ComponentProps) {
   const { challenge } = loaderData;
   const [code, setCode] = useState(challenge.starterCode);
+  const layoutData = useRouteLoaderData("routes/student/layout") as { user: User } | undefined;
+  const tabHidden = useTabFocusGuard();
+  const watermarkLabel = layoutData
+    ? `${fullName(layoutData.user)} · ${layoutData.user.email}`
+    : "";
 
   const submit = useFetcher<typeof action>();
   const poll = useFetcher<{ submission: Submission }>();
@@ -164,9 +211,16 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+      <div className="relative flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* Left: prompt */}
-        <div className="flex min-h-0 flex-col border-b lg:w-[38%] lg:border-r lg:border-b-0">
+        <div
+          className="relative flex min-h-0 flex-col border-b select-none lg:w-[38%] lg:border-r lg:border-b-0"
+          onCopy={blockClipboard}
+          onCut={blockClipboard}
+          onPaste={blockClipboard}
+          onContextMenu={blockClipboard}
+        >
+          <Watermark label={watermarkLabel} />
           <Tabs defaultValue="instructions" className="flex min-h-0 flex-1 flex-col gap-0">
             <TabsList variant="line" className="shrink-0 gap-4 border-b px-8 py-2">
               <TabsTrigger value="instructions">Instrucciones</TabsTrigger>
@@ -189,7 +243,9 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
                 {challenge.filename}
               </span>
             </div>
-            <div className="monokai min-h-0 flex-1 overflow-auto">
+            {/* Pasting is blocked to stop dropping in externally-written solutions;
+                typing, and copying/cutting your own code, still work normally. */}
+            <div className="monokai min-h-0 flex-1 overflow-auto" onPaste={blockClipboard}>
               <Editor
                 value={code}
                 onValueChange={setCode}
@@ -246,6 +302,15 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
             </ul>
           </div>
         </div>
+
+        {tabHidden && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-background/90 backdrop-blur-md">
+            <EyeOff className="size-6 text-muted-foreground" />
+            <p className="text-sm font-medium text-muted-foreground">
+              El desafío se pausó — volvé a esta pestaña para continuar
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

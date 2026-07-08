@@ -14,10 +14,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export function meta() {
-  return [{ title: "Curso · CodeClass" }];
+  return [{ title: "Curso · Programación Avanzada" }];
 }
 
-function DayTile({ c }: { c: Challenge }) {
+function DayTile({ c, courseId }: { c: Challenge; courseId: string }) {
   const day = String(c.day).padStart(2, "0");
 
   if (c.status === "locked") {
@@ -35,7 +35,7 @@ function DayTile({ c }: { c: Challenge }) {
   const done = c.status === "done";
   return (
     <Link
-      to={`/app/challenges/${c.id}`}
+      to={`/app/courses/${courseId}/challenges/${c.id}`}
       className={cn(
         "flex min-h-24 flex-col gap-2 rounded-xl border-[1.5px] p-4 transition-colors",
         done
@@ -94,7 +94,7 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
 
       <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
         {course.challenges.map((c) => (
-          <DayTile key={c.id} c={c} />
+          <DayTile key={c.id} c={c} courseId={course.id} />
         ))}
       </div>
     </main>

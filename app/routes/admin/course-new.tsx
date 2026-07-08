@@ -7,7 +7,7 @@ import { AdminFormHeader, CourseForm } from "~/components/course-form";
 import { Button } from "~/components/ui/button";
 
 export function meta() {
-  return [{ title: "Nuevo curso · CodeClass" }];
+  return [{ title: "Nuevo curso · Programación Avanzada" }];
 }
 
 export async function action({ request }: Route.ActionArgs) {

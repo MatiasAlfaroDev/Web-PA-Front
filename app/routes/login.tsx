@@ -10,7 +10,7 @@ import { Label } from "~/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 
 export function meta() {
-  return [{ title: "Iniciar sesión · CodeClass" }];
+  return [{ title: "Iniciar sesión · Programación Avanzada" }];
 }
 
 // Already signed in? Skip the form.

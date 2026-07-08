@@ -105,6 +105,43 @@ export interface ApiLeaderRow {
   streak?: number;
 }
 
+// --- teacher: student audit ---
+export interface ApiStudentRow {
+  id: number;
+  first_name: string;
+  last_name: string;
+  ci: string | null;
+  email: string;
+  email_verified_at: string | null;
+  total_score: number | string;
+  challenges_solved: number | string;
+}
+export interface ApiStudentProgress {
+  id: number;
+  title: string;
+  points: number;
+  course_id: number;
+  attempts: number | string;
+  best_score: number | string;
+  solved: number | string;
+}
+export interface ApiStudentSubmission {
+  id: number;
+  challenge_id: number;
+  code: string;
+  status: "pending" | "judging" | "passed" | "partial" | "failed" | "error";
+  passed_count: number;
+  total_count: number;
+  score: number;
+  created_at: string;
+  challenge: { id: number; title: string };
+}
+export interface ApiStudentDetail {
+  student: { id: number; first_name: string; last_name: string; ci: string | null; email: string };
+  progress: ApiStudentProgress[];
+  recent_submissions: ApiStudentSubmission[];
+}
+
 export function mapCourse(c: ApiCourse): Course {
   return {
     id: String(c.id),

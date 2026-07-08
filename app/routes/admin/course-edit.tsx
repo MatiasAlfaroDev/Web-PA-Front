@@ -23,7 +23,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
 import { cn } from "~/lib/utils";
 
 export function meta() {
-  return [{ title: "Editar curso · CodeClass" }];
+  return [{ title: "Editar curso · Programación Avanzada" }];
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {

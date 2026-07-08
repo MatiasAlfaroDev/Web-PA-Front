@@ -11,7 +11,7 @@ import { Label } from "~/components/ui/label";
 import { Check } from "lucide-react";
 
 export function meta() {
-  return [{ title: "Crear cuenta · CodeClass" }];
+  return [{ title: "Crear cuenta · Programación Avanzada" }];
 }
 
 // Same rules drive the checklist and the strength bar (one met rule = one point).

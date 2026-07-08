@@ -9,7 +9,7 @@ export function SiteLogo({ showWordmark = true }: { showWordmark?: boolean }) {
   return (
     <span className="flex items-center gap-2 font-semibold">
       <Code2 className="size-5 text-success" strokeWidth={2.5} />
-      {showWordmark && <span className="text-[17px] tracking-tight">CodeClass</span>}
+      {showWordmark && <span className="text-[17px] tracking-tight">PA</span>}
     </span>
   );
 }

@@ -17,7 +17,7 @@ import {
 import { timeAgo } from "~/lib/utils";
 
 export function meta() {
-  return [{ title: "Mis cursos · CodeClass" }];
+  return [{ title: "Mis cursos · Programación Avanzada" }];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {

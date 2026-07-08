@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { cn } from "~/lib/utils";
 
 export function meta() {
-  return [{ title: "Clasificación · CodeClass" }];
+  return [{ title: "Clasificación · Programación Avanzada" }];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {

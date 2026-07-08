@@ -1,19 +1,30 @@
-import { Plus } from "lucide-react";
-import { Link, NavLink, Outlet } from "react-router";
+import { Link, NavLink, Outlet, useLocation, useNavigation, type ShouldRevalidateFunctionArgs } from "react-router";
 import type { Route } from "./+types/layout";
 import { initialsOf, requireUser } from "~/lib/auth";
 import { SiteLogo, ThemeToggle } from "~/components/bits";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+import { PageSkeleton } from "~/components/skeletons";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireUser(request, "teacher");
   return { user };
 }
 
+// Same rationale as the student layout: skip refetching the teacher's
+// profile on plain navigations, only after a submission.
+export function shouldRevalidate({ formMethod, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
+  return formMethod != null ? defaultShouldRevalidate : false;
+}
+
 export default function AdminLayout({ loaderData }: Route.ComponentProps) {
   const { user } = loaderData;
+  const navigation = useNavigation();
+  const location = useLocation();
+  const navigatingTo =
+    navigation.state === "loading" && navigation.location.pathname !== location.pathname
+      ? navigation.location.pathname
+      : null;
   return (
     <div className="min-h-svh">
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
@@ -35,14 +46,18 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
           >
             Mis cursos
           </NavLink>
+          <NavLink
+            to="/admin/students"
+            className={({ isActive }) =>
+              isActive
+                ? "text-sm font-semibold text-foreground underline decoration-2 underline-offset-8"
+                : "text-sm font-medium text-muted-foreground hover:text-foreground"
+            }
+          >
+            Estudiantes
+          </NavLink>
 
           <div className="ml-auto flex items-center gap-3">
-            <Button asChild>
-              <Link to="/admin/courses/new">
-                <Plus />
-                Nuevo curso
-              </Link>
-            </Button>
             <ThemeToggle />
             <Avatar className="size-8">
               <AvatarFallback className="font-mono text-xs">{initialsOf(user)}</AvatarFallback>
@@ -50,7 +65,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
           </div>
         </nav>
       </header>
-      <Outlet />
+      {navigatingTo ? <PageSkeleton pathname={navigatingTo} /> : <Outlet />}
     </div>
   );
 }

@@ -26,7 +26,7 @@ export default [
     ...prefix("app", [
       route("courses", "routes/student/courses.tsx"),
       route("courses/:courseId", "routes/student/course-detail.tsx"),
-      route("challenges/:challengeId", "routes/student/challenge.tsx"),
+      route("courses/:courseId/challenges/:challengeId", "routes/student/challenge.tsx"),
       route("profile", "routes/student/profile.tsx"),
       route("leaderboard", "routes/student/leaderboard.tsx"),
     ]),
@@ -38,6 +38,8 @@ export default [
       route("courses", "routes/admin/courses.tsx"),
       route("courses/new", "routes/admin/course-new.tsx"),
       route("courses/:courseId", "routes/admin/course-edit.tsx"),
+      route("students", "routes/admin/students.tsx"),
+      route("students/:studentId", "routes/admin/student-detail.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;

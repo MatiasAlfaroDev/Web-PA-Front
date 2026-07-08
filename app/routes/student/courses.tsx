@@ -7,7 +7,7 @@ import { InitialsBadge, DifficultyPill } from "~/components/bits";
 import { Progress } from "~/components/ui/progress";
 
 export function meta() {
-  return [{ title: "Tus cursos · CodeClass" }];
+  return [{ title: "Tus cursos · Programación Avanzada" }];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {

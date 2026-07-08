@@ -7,7 +7,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
 export function meta() {
-  return [{ title: "Restablecer contraseña · CodeClass" }];
+  return [{ title: "Restablecer contraseña · Programación Avanzada" }];
 }
 
 export async function action({ request }: Route.ActionArgs) {

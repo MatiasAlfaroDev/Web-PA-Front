@@ -7,7 +7,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
 export function meta() {
-  return [{ title: "Verificar email · CodeClass" }];
+  return [{ title: "Verificar email · Programación Avanzada" }];
 }
 
 export async function action({ request }: Route.ActionArgs) {

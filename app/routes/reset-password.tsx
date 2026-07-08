@@ -7,7 +7,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
 export function meta() {
-  return [{ title: "Crear una nueva contraseña · CodeClass" }];
+  return [{ title: "Crear una nueva contraseña · Programación Avanzada" }];
 }
 
 export async function action({ request }: Route.ActionArgs) {
