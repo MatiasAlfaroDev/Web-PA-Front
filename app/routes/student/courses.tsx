@@ -1,23 +1,27 @@
 import { Link } from "react-router";
-import { courses } from "~/lib/mock-data";
+import type { Route } from "./+types/courses";
+import { api } from "~/lib/api";
+import { getTokenOrRedirect } from "~/lib/auth";
+import { mapCourse, type ApiCourse } from "~/lib/mappers";
 import { InitialsBadge, DifficultyPill } from "~/components/bits";
 import { Progress } from "~/components/ui/progress";
 
 export function meta() {
-  return [{ title: "Your courses · CodeClass" }];
+  return [{ title: "Tus cursos · CodeClass" }];
 }
 
-export function loader() {
-  // ponytail: swap for api<Course[]>("/courses")
+export async function loader({ request }: Route.LoaderArgs) {
+  const token = await getTokenOrRedirect(request);
+  const courses = (await api<ApiCourse[]>("/courses", { token })).map(mapCourse);
   return { courses };
 }
 
-export default function Courses({ loaderData }: { loaderData: { courses: typeof courses } }) {
+export default function Courses({ loaderData }: Route.ComponentProps) {
   return (
     <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
       <header className="mb-7">
-        <h1 className="text-[28px] font-extrabold tracking-tight">Your courses</h1>
-        <p className="text-sm text-muted-foreground">Pick up where you left off</p>
+        <h1 className="text-[28px] font-extrabold tracking-tight">Tus cursos</h1>
+        <p className="text-sm text-muted-foreground">Retomá donde lo dejaste</p>
       </header>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-[18px]">
@@ -42,7 +46,7 @@ export default function Courses({ loaderData }: { loaderData: { courses: typeof 
               <div className="mt-auto space-y-1.5">
                 <div className="flex items-center justify-between font-mono text-xs">
                   <span className="text-muted-foreground">
-                    {course.done}/{course.total} challenges
+                    {course.done}/{course.total} desafíos
                   </span>
                   <span className={pct === 100 ? "font-bold text-success" : "font-bold"}>
                     {pct}%

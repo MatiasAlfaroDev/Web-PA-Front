@@ -1,13 +1,21 @@
-import { leaderboard } from "~/lib/mock-data";
+import type { Route } from "./+types/leaderboard";
+import { api } from "~/lib/api";
+import { getTokenOrRedirect, type User } from "~/lib/auth";
+import { mapLeaderboard, type ApiLeaderRow } from "~/lib/mappers";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { cn } from "~/lib/utils";
 
 export function meta() {
-  return [{ title: "Leaderboard · CodeClass" }];
+  return [{ title: "Clasificación · CodeClass" }];
 }
 
-export function loader() {
-  return { leaderboard };
+export async function loader({ request }: Route.LoaderArgs) {
+  const token = await getTokenOrRedirect(request);
+  const [me, rows] = await Promise.all([
+    api<User>("/profile", { token }),
+    api<ApiLeaderRow[]>("/leaderboard", { token }),
+  ]);
+  return { leaderboard: mapLeaderboard(rows, me.id) };
 }
 
 const rankColor: Record<number, string> = {
@@ -16,12 +24,12 @@ const rankColor: Record<number, string> = {
   3: "bg-[#f97316] text-white",
 };
 
-export default function Leaderboard({ loaderData }: { loaderData: { leaderboard: typeof leaderboard } }) {
+export default function Leaderboard({ loaderData }: Route.ComponentProps) {
   return (
     <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
       <header className="mb-7">
-        <h1 className="text-[28px] font-extrabold tracking-tight">Leaderboard</h1>
-        <p className="text-sm text-muted-foreground">Ranked by total points across all courses this term</p>
+        <h1 className="text-[28px] font-extrabold tracking-tight">Clasificación</h1>
+        <p className="text-sm text-muted-foreground">Ordenado por puntos totales de todos los cursos de este período</p>
       </header>
 
       <div className="divide-y rounded-xl border bg-card">
@@ -46,7 +54,7 @@ export default function Leaderboard({ loaderData }: { loaderData: { leaderboard:
             </Avatar>
             <div className="min-w-0">
               <p className="truncate font-semibold">{e.name}</p>
-              <p className="text-xs text-muted-foreground">{e.streak}-day streak</p>
+              <p className="text-xs text-muted-foreground">racha de {e.streak} días</p>
             </div>
             <span className="ml-auto font-mono font-bold text-success">{e.points} pts</span>
           </div>

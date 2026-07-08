@@ -3,7 +3,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { toggleTheme } from "~/lib/theme";
-import type { Difficulty } from "~/lib/mock-data";
+import type { Difficulty } from "~/lib/mappers";
 
 export function SiteLogo({ showWordmark = true }: { showWordmark?: boolean }) {
   return (
@@ -17,7 +17,7 @@ export function SiteLogo({ showWordmark = true }: { showWordmark?: boolean }) {
 export function ThemeToggle() {
   // CSS picks the icon from the theme class — no hydration-sensitive state.
   return (
-    <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+    <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Cambiar tema">
       <Moon className="dark:hidden" />
       <Sun className="hidden dark:block" />
     </Button>

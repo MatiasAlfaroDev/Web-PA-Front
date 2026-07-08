@@ -1,18 +1,20 @@
 import { ArrowLeft, Check, Lock, Play } from "lucide-react";
 import { Link } from "react-router";
 import type { Route } from "./+types/course-detail";
-import { getCourseDetail, type Challenge } from "~/lib/mock-data";
-import { DifficultyPill } from "~/components/bits";
+import { api } from "~/lib/api";
+import { getTokenOrRedirect } from "~/lib/auth";
+import { mapCourseDetail, type ApiCourse, type Challenge } from "~/lib/mappers";
 import { Progress } from "~/components/ui/progress";
 import { cn } from "~/lib/utils";
 
-export function loader({ params }: Route.LoaderArgs) {
-  // ponytail: swap for api<CourseDetail>(`/courses/${params.courseId}`)
-  return { course: getCourseDetail(params.courseId) };
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const token = await getTokenOrRedirect(request);
+  const course = await api<ApiCourse>(`/courses/${params.courseId}`, { token });
+  return { course: mapCourseDetail(course) };
 }
 
 export function meta() {
-  return [{ title: "Course · CodeClass" }];
+  return [{ title: "Curso · CodeClass" }];
 }
 
 function DayTile({ c }: { c: Challenge }) {
@@ -69,14 +71,14 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
         className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        All courses
+        Todos los cursos
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1.5">
           <h1 className="text-[28px] font-extrabold tracking-tight">{course.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {course.total} daily challenges · {course.difficulty} · {course.unlockCopy}
+            {course.total} desafíos diarios · {course.difficulty} · {course.unlockCopy}
           </p>
         </div>
         <div className="text-right">
@@ -84,7 +86,7 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
             {course.done}
             <span className="text-muted-foreground">/{course.total}</span>
           </p>
-          <p className="text-xs text-muted-foreground">challenges done</p>
+          <p className="text-xs text-muted-foreground">desafíos completados</p>
         </div>
       </div>
 

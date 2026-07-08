@@ -164,3 +164,44 @@ body {
     animation: none;
   }
 }
+
+/* Monokai syntax highlighting for the challenge code editor (Prism tokens). */
+.monokai {
+  background: #272822;
+  color: #f8f8f2;
+}
+.monokai .token.comment,
+.monokai .token.prolog,
+.monokai .token.doctype,
+.monokai .token.cdata {
+  color: #75715e;
+  font-style: italic;
+}
+.monokai .token.punctuation {
+  color: #f8f8f2;
+}
+.monokai .token.keyword {
+  color: #f92672;
+}
+.monokai .token.operator {
+  color: #f92672;
+}
+.monokai .token.string,
+.monokai .token.char {
+  color: #e6db74;
+}
+.monokai .token.number,
+.monokai .token.boolean,
+.monokai .token.constant {
+  color: #ae81ff;
+}
+.monokai .token.function {
+  color: #a6e22e;
+}
+.monokai .token.class-name {
+  color: #66d9ef;
+  font-style: italic;
+}
+.monokai .token.annotation {
+  color: #a6e22e;
+}

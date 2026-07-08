@@ -8,7 +8,18 @@ import {
 
 export default [
   index("routes/home.tsx"),
+
+  // Auth
   route("login", "routes/login.tsx"),
+  route("register", "routes/register.tsx"),
+  route("verify-email", "routes/verify-email.tsx"),
+  route("forgot-password", "routes/forgot-password.tsx"),
+  route("reset-password", "routes/reset-password.tsx"),
+  route("logout", "routes/logout.tsx"),
+
+  // Loader-only resource routes (outside layouts to avoid re-running guards)
+  route("app/submissions/:submissionId", "routes/submission-status.tsx"),
+  route("admin/challenges/:challengeId", "routes/admin/challenge-data.tsx"),
 
   // Student area
   layout("routes/student/layout.tsx", [

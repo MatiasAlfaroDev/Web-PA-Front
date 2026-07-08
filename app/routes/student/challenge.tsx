@@ -1,19 +1,48 @@
-import { useState } from "react";
-import { ArrowLeft, Check, Play, X } from "lucide-react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Check, Lock, Play, X } from "lucide-react";
+import { Link, useFetcher } from "react-router";
+import CodeEditor from "react-simple-code-editor";
+import Prism from "prismjs";
+import "prismjs/components/prism-java";
+
+// react-simple-code-editor is CJS (exports.default without an __esModule flag), so
+// Vite hands back the module namespace — unwrap .default to get the component.
+const Editor = ((CodeEditor as any).default ?? CodeEditor) as typeof CodeEditor;
 import type { Route } from "./+types/challenge";
-import { getChallenge } from "~/lib/mock-data";
+import { api, apiResult } from "~/lib/api";
+import { getTokenOrRedirect } from "~/lib/auth";
+import { mapChallengeDetail, type ApiChallenge, type ApiCourse } from "~/lib/mappers";
+import type { Submission } from "../submission-status";
 import { Button } from "~/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
 import { cn } from "~/lib/utils";
 
-export function loader({ params }: Route.LoaderArgs) {
-  // ponytail: swap for api<ChallengeDetail>(`/challenges/${params.challengeId}`)
-  return { challenge: getChallenge(params.challengeId) };
+const highlightJava = (code: string) => Prism.highlight(code, Prism.languages.java, "java");
+
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const token = await getTokenOrRedirect(request);
+  const challenge = await api<ApiChallenge>(`/challenges/${params.challengeId}`, { token });
+  const course = await api<ApiCourse>(`/courses/${challenge.course_id}`, { token });
+  return { challenge: mapChallengeDetail(challenge, course) };
+}
+
+export async function action({ request, params }: Route.ActionArgs) {
+  const token = await getTokenOrRedirect(request);
+  const form = await request.formData();
+  const res = await apiResult<Submission>(`/challenges/${params.challengeId}/submissions`, {
+    method: "POST",
+    token,
+    body: JSON.stringify({
+      language_id: Number(form.get("language_id")),
+      code: form.get("code"),
+    }),
+  });
+  if (!res.ok) return { error: res.data.message ?? "No se pudo enviar tu solución." };
+  return { submission: res.data };
 }
 
 export function meta() {
-  return [{ title: "Challenge · CodeClass" }];
+  return [{ title: "Desafío · CodeClass" }];
 }
 
 // Minimal markdown-lite: ``` fences become code blocks; # / ## become headings;
@@ -48,7 +77,7 @@ function Prose({ text }: { text: string }) {
                     </h2>
                   );
                 return (
-                  <p key={j}>
+                  <p key={j} className="whitespace-pre-wrap">
                     {para.split(/`/).map((seg, k) =>
                       k % 2 === 1 ? (
                         <code
@@ -58,7 +87,7 @@ function Prose({ text }: { text: string }) {
                           {seg}
                         </code>
                       ) : (
-                        seg
+                        seg.replace(/\*\*/g, "")
                       )
                     )}
                   </p>
@@ -71,27 +100,39 @@ function Prose({ text }: { text: string }) {
   );
 }
 
-type RunState = "idle" | "running" | "done";
+const TERMINAL = ["passed", "partial", "failed", "error"];
 
 export default function Challenge({ loaderData }: Route.ComponentProps) {
   const { challenge } = loaderData;
   const [code, setCode] = useState(challenge.starterCode);
-  const [runState, setRunState] = useState<RunState>("idle");
 
-  // ponytail: mock run — 700ms then all pass. Real version posts `code` to the
-  // grading endpoint and renders pass/fail + messages from the response; Submit
-  // additionally unlocks the next challenge and updates points/streak.
-  function run() {
-    setRunState("running");
-    setTimeout(() => setRunState("done"), 700);
-  }
+  const submit = useFetcher<typeof action>();
+  const poll = useFetcher<{ submission: Submission }>();
 
-  const summary =
-    runState === "idle"
-      ? "Run your code to see test results"
-      : runState === "running"
-        ? "Running tests…"
-        : `${challenge.tests.length}/${challenge.tests.length} tests passed`;
+  // The current submission: latest polled state, falling back to the POST result.
+  const submission: Submission | undefined = poll.data?.submission ?? submit.data?.submission;
+  const status = submission?.status;
+  const isTerminal = status != null && TERMINAL.includes(status);
+  const running = submit.state !== "idle" || (submission != null && !isTerminal);
+
+  // Poll the submission until it reaches a terminal status.
+  useEffect(() => {
+    if (!submission || isTerminal || poll.state !== "idle") return;
+    const t = setTimeout(() => poll.load(`/app/submissions/${submission.id}`), 1000);
+    return () => clearTimeout(t);
+  }, [submission, isTerminal, poll]);
+
+  const cases = submission?.judge_output?.cases ?? [];
+  const summary = !submission
+    ? "Ejecutá tu código para ver los resultados de las pruebas"
+    : !isTerminal
+      ? "Ejecutando pruebas…"
+      : status === "error"
+        ? submission.judge_output?.message ?? "Error de compilación o de ejecución"
+        : `${submission.passed_count}/${submission.total_count} pruebas superadas · +${submission.score} pts`;
+
+  const submitError = submit.data && "error" in submit.data ? submit.data.error : undefined;
+  const locked = challenge.status === "locked";
 
   return (
     <div className="flex h-[calc(100svh-3.5rem)] flex-col">
@@ -104,25 +145,32 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
           {challenge.courseTitle}
         </Link>
         <span className="text-sm font-bold">
-          Day {challenge.day} · {challenge.title}
+          Día {challenge.day} · {challenge.title}
         </span>
         <div className="ml-auto flex items-center gap-4">
           <span className="rounded-md bg-success-soft px-2 py-0.5 font-mono text-xs font-medium text-success-soft-foreground">
             +{challenge.points} pts
           </span>
           <span className="font-mono text-xs text-muted-foreground">
-            {challenge.remaining} of {challenge.total} remaining
+            {challenge.remaining} de {challenge.total} restantes
           </span>
         </div>
       </div>
+
+      {locked && (
+        <div className="flex items-center gap-2 border-b bg-muted/40 px-8 py-2 text-sm text-muted-foreground">
+          <Lock className="size-4" />
+          Este desafío se desbloquea cuando completes el anterior — volvé mañana.
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* Left: prompt */}
         <div className="flex min-h-0 flex-col border-b lg:w-[38%] lg:border-r lg:border-b-0">
           <Tabs defaultValue="instructions" className="flex min-h-0 flex-1 flex-col gap-0">
             <TabsList variant="line" className="shrink-0 gap-4 border-b px-8 py-2">
-              <TabsTrigger value="instructions">Instructions</TabsTrigger>
-              <TabsTrigger value="hints">Hints</TabsTrigger>
+              <TabsTrigger value="instructions">Instrucciones</TabsTrigger>
+              <TabsTrigger value="hints">Ejemplos</TabsTrigger>
             </TabsList>
             <TabsContent value="instructions" className="min-h-0 overflow-y-auto px-8 py-6">
               <Prose text={challenge.instructions} />
@@ -141,45 +189,60 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
                 {challenge.filename}
               </span>
             </div>
-            {/* ponytail: plain textarea stands in for Monaco/CodeMirror — swap in a
-                real editor with a dark theme + syntax highlighting when wiring the runner. */}
-            <textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              spellCheck={false}
-              className="min-h-0 flex-1 resize-none bg-[#1e1e1e] p-4 font-mono text-[13px] leading-relaxed text-[#d4d4d4] outline-none"
-            />
+            <div className="monokai min-h-0 flex-1 overflow-auto">
+              <Editor
+                value={code}
+                onValueChange={setCode}
+                highlight={highlightJava}
+                padding={16}
+                tabSize={4}
+                spellCheck={false}
+                textareaClassName="outline-none"
+                className="min-h-full font-mono text-[13px] leading-relaxed"
+                style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "#f8f8f2" }}
+              />
+            </div>
             <div className="flex shrink-0 items-center justify-between gap-2 border-t border-white/10 p-3">
               <Button
                 variant="ghost"
                 className="text-[#d4d4d4] hover:bg-white/10 hover:text-white"
                 onClick={() => setCode(challenge.starterCode)}
               >
-                Reset
+                Reiniciar
               </Button>
-              <div className="flex gap-2">
-                <Button
-                  className="bg-white/10 text-white hover:bg-white/20"
-                  onClick={run}
-                  disabled={runState === "running"}
-                >
+              <submit.Form method="post">
+                <input type="hidden" name="code" value={code} />
+                <input type="hidden" name="language_id" value={challenge.languageId} />
+                <Button type="submit" disabled={running || locked}>
                   <Play className="fill-current" />
-                  Run
+                  {running ? "Ejecutando…" : "Enviar y ejecutar"}
                 </Button>
-                <Button onClick={run} disabled={runState === "running"}>
-                  Submit
-                </Button>
-              </div>
+              </submit.Form>
             </div>
           </div>
 
           {/* Results panel */}
           <div className="flex h-[38%] shrink-0 flex-col overflow-y-auto border-t bg-background px-6 py-4">
-            <p className="mb-3 font-mono text-sm font-medium">{summary}</p>
+            <p
+              className={cn(
+                "mb-3 font-mono text-sm font-medium",
+                status === "passed" && "text-success",
+                status === "error" && "text-destructive"
+              )}
+            >
+              {summary}
+            </p>
+            {submitError && <p className="mb-3 text-sm text-destructive">{submitError}</p>}
             <ul className="space-y-2">
-              {challenge.tests.map((t) => (
-                <TestRow key={t.name} name={t.name} state={runState} />
-              ))}
+              {cases.length > 0
+                ? cases.map((c, i) => (
+                    <ResultRow
+                      key={c.test_case_id}
+                      name={c.hidden ? `Caso oculto ${i + 1}` : `Caso ${i + 1}`}
+                      passed={c.passed}
+                    />
+                  ))
+                : challenge.tests.map((t, i) => <ResultRow key={i} name={t.name} pending />)}
             </ul>
           </div>
         </div>
@@ -188,21 +251,17 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
   );
 }
 
-function TestRow({ name, state }: { name: string; state: RunState }) {
-  const passed = state === "done";
+function ResultRow({ name, passed, pending }: { name: string; passed?: boolean; pending?: boolean }) {
   return (
     <li className="flex items-center gap-2.5 text-sm">
-      {passed ? (
+      {pending ? (
+        <span className="size-2 rounded-full bg-border-strong" />
+      ) : passed ? (
         <Check className="size-4 text-success" />
       ) : (
-        <span
-          className={cn(
-            "size-2 rounded-full",
-            state === "running" ? "animate-pulse bg-muted-foreground" : "bg-border-strong"
-          )}
-        />
+        <X className="size-4 text-destructive" />
       )}
-      <span className={cn(state === "idle" && "text-muted-foreground")}>{name}</span>
+      <span className={cn(pending && "text-muted-foreground")}>{name}</span>
     </li>
   );
 }
