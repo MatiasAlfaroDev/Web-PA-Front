@@ -2,9 +2,10 @@ import { Link } from "react-router";
 import type { Route } from "./+types/courses";
 import { api } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
-import { mapCourse, type ApiCourse } from "~/lib/mappers";
-import { InitialsBadge, DifficultyPill } from "~/components/bits";
+import { courseLockState, mapCourse, type ApiCourse } from "~/lib/mappers";
+import { CourseLockNotice } from "~/components/bits";
 import { Progress } from "~/components/ui/progress";
+import { cn } from "~/lib/utils";
 
 export function meta() {
   return [{ title: "Tus cursos · Programación Avanzada" }];
@@ -26,34 +27,49 @@ export default function Courses({ loaderData }: Route.ComponentProps) {
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-[18px]">
         {loaderData.courses.map((course) => {
-          const pct = Math.round((course.done / course.total) * 100);
-          return (
-            <Link
-              key={course.id}
-              to={`/app/courses/${course.id}`}
-              className="flex flex-col gap-4 rounded-xl border bg-card p-5 transition-colors hover:border-border-strong"
-            >
-              <div className="flex items-center justify-between">
-                <InitialsBadge initials={course.initials} />
-                <DifficultyPill difficulty={course.difficulty} />
-              </div>
+          const { locked, unlocksAt } = courseLockState(course);
+          const pct = course.total ? Math.round((course.done / course.total) * 100) : 0;
+
+          const content = (
+            <>
               <div className="space-y-1.5">
                 <h2 className="text-[17px] leading-snug font-bold">{course.title}</h2>
                 <p className="line-clamp-2 text-[13.5px] text-muted-foreground">
                   {course.description}
                 </p>
               </div>
-              <div className="mt-auto space-y-1.5">
-                <div className="flex items-center justify-between font-mono text-xs">
-                  <span className="text-muted-foreground">
-                    {course.done}/{course.total} desafíos
-                  </span>
-                  <span className={pct === 100 ? "font-bold text-success" : "font-bold"}>
-                    {pct}%
-                  </span>
+              {locked ? (
+                <div className="mt-auto">
+                  <CourseLockNotice unlocksAt={unlocksAt} />
                 </div>
-                <Progress value={pct} className="h-1.5" />
-              </div>
+              ) : (
+                <div className="mt-auto space-y-1.5">
+                  <div className="flex items-center justify-between font-mono text-xs">
+                    <span className="text-muted-foreground">
+                      {course.done}/{course.total} desafíos
+                    </span>
+                    <span className={pct === 100 ? "font-bold text-success" : "font-bold"}>
+                      {pct}%
+                    </span>
+                  </div>
+                  <Progress value={pct} className="h-1.5" />
+                </div>
+              )}
+            </>
+          );
+
+          const className = cn(
+            "flex flex-col gap-4 rounded-xl border p-5 transition-colors",
+            locked ? "cursor-not-allowed bg-muted/40 opacity-75" : "bg-card hover:border-border-strong",
+          );
+
+          return locked ? (
+            <div key={course.id} className={className}>
+              {content}
+            </div>
+          ) : (
+            <Link key={course.id} to={`/app/courses/${course.id}`} className={className}>
+              {content}
             </Link>
           );
         })}

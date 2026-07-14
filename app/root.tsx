@@ -9,11 +9,13 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { Toaster } from "~/components/ui/sonner";
 
 // Geist is self-hosted via @fontsource-variable/geist (imported in app.css) so
 // the UI font needs no external request. JetBrains Mono is the only remaining
 // external font — still worth the preconnect.
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", type: "image/png", href: "/favicon.png" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -41,6 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster position="top-right" />
         <ScrollRestoration />
         <Scripts />
       </body>

@@ -11,6 +11,7 @@ export interface User {
   email: string;
   role: Role;
   bio?: string | null;
+  avatar_url?: string | null;
   points?: number;
   streak?: number;
   solved?: number;

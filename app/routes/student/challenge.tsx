@@ -13,6 +13,7 @@ import { api, apiResult } from "~/lib/api";
 import { fullName, getTokenOrRedirect, type User } from "~/lib/auth";
 import { mapChallengeDetail, type ApiChallenge, type ApiCourse } from "~/lib/mappers";
 import type { Submission } from "../submission-status";
+import { Prose } from "~/components/bits";
 import { Button } from "~/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
 import { cn } from "~/lib/utils";
@@ -85,61 +86,6 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 export function meta() {
   return [{ title: "Desafío · Programación Avanzada" }];
-}
-
-// Minimal markdown-lite: ``` fences become code blocks; # / ## become headings;
-// `inline` spans render as inline code. Enough for the authored prompt text.
-function Prose({ text }: { text: string }) {
-  return (
-    <div className="space-y-3 text-[15.5px] leading-[1.7]">
-      {text.split(/```\n?/).map((block, i) =>
-        i % 2 === 1 ? (
-          <pre
-            key={i}
-            className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-[13px] leading-relaxed"
-          >
-            {block.replace(/\n$/, "")}
-          </pre>
-        ) : (
-          <div key={i} className="space-y-3">
-            {block
-              .trim()
-              .split(/\n\n+/)
-              .map((para, j) => {
-                if (para.startsWith("## "))
-                  return (
-                    <h3 key={j} className="text-base font-semibold">
-                      {para.slice(3)}
-                    </h3>
-                  );
-                if (para.startsWith("# "))
-                  return (
-                    <h2 key={j} className="text-xl font-bold tracking-tight">
-                      {para.slice(2)}
-                    </h2>
-                  );
-                return (
-                  <p key={j} className="whitespace-pre-wrap">
-                    {para.split(/`/).map((seg, k) =>
-                      k % 2 === 1 ? (
-                        <code
-                          key={k}
-                          className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]"
-                        >
-                          {seg}
-                        </code>
-                      ) : (
-                        seg.replace(/\*\*/g, "")
-                      )
-                    )}
-                  </p>
-                );
-              })}
-          </div>
-        )
-      )}
-    </div>
-  );
 }
 
 const TERMINAL = ["passed", "partial", "failed", "error"];

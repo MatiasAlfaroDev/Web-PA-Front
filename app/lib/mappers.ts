@@ -1,9 +1,6 @@
 // UI contract types + mapping from the Laravel API's snake_case payloads.
-// Backend courses have no course-level difficulty/publish; the API computes a
-// course difficulty from its challenges. Challenge unlock status is computed
-// server-side (done | current | locked).
+// Challenge unlock status is computed server-side (done | current | locked).
 
-export type Difficulty = "Principiante" | "Intermedio" | "Avanzado";
 export type ChallengeStatus = "done" | "current" | "locked";
 
 export interface Course {
@@ -11,9 +8,28 @@ export interface Course {
   initials: string;
   title: string;
   description: string;
-  difficulty: Difficulty;
   done: number;
   total: number;
+  published: boolean;
+  availableFrom: string | null;
+  availableUntil: string | null;
+}
+
+// Published + inside its availability window (or no window set). Teachers
+// bypass this entirely server-side; this is only ever computed for students.
+export function courseLockState(c: Pick<Course, "published" | "availableFrom" | "availableUntil">): {
+  locked: boolean;
+  unlocksAt: string | null;
+} {
+  if (!c.published) return { locked: true, unlocksAt: c.availableFrom };
+  const now = Date.now();
+  if (c.availableFrom && new Date(c.availableFrom).getTime() > now) {
+    return { locked: true, unlocksAt: c.availableFrom };
+  }
+  if (c.availableUntil && new Date(c.availableUntil).getTime() < now) {
+    return { locked: true, unlocksAt: null };
+  }
+  return { locked: false, unlocksAt: null };
 }
 
 export interface Challenge {
@@ -27,6 +43,17 @@ export interface Challenge {
 export interface CourseDetail extends Course {
   unlockCopy: string;
   challenges: Challenge[];
+  lessons: Lesson[];
+}
+
+export interface Lesson {
+  id: string;
+  title: string;
+  position: number;
+}
+
+export interface LessonDetail extends Lesson {
+  content: string;
 }
 
 export interface ChallengeDetail extends Challenge {
@@ -51,14 +78,6 @@ export interface LeaderboardEntry {
   isCurrentUser?: boolean;
 }
 
-const DIFFICULTY: Record<string, Difficulty> = {
-  easy: "Principiante",
-  medium: "Intermedio",
-  hard: "Avanzado",
-};
-
-export const mapDifficulty = (d?: string): Difficulty => DIFFICULTY[d ?? "easy"] ?? "Principiante";
-
 // Initials from a title: first letter of the first two words.
 export function initialsFromTitle(title: string): string {
   const words = title.replace(/[^\p{L}\p{N} ]/gu, "").trim().split(/\s+/);
@@ -81,6 +100,21 @@ export interface ApiCourse {
   lessons_count?: number;
   updated_at?: string;
   challenges?: ApiChallenge[];
+  lessons?: ApiLesson[];
+  published?: boolean;
+  available_from?: string | null;
+  available_until?: string | null;
+}
+export interface ApiLesson {
+  id: number;
+  course_id: number;
+  title: string;
+  content?: string;
+  position: number;
+  published?: boolean;
+  available_from?: string | null;
+  available_until?: string | null;
+  challenges?: ApiChallenge[];
 }
 export interface ApiChallenge {
   id: number;
@@ -95,6 +129,7 @@ export interface ApiChallenge {
   language_id?: number;
   course_id?: number;
   my_best_score?: number;
+  min_points?: number | null;
   testCases?: { id: number; stdin: string | null; expected_output: string }[];
 }
 export interface ApiLeaderRow {
@@ -148,9 +183,11 @@ export function mapCourse(c: ApiCourse): Course {
     initials: initialsFromTitle(c.title),
     title: c.title,
     description: c.description ?? "",
-    difficulty: mapDifficulty(c.difficulty),
     done: c.solved_count ?? 0,
     total: c.challenges_count ?? c.challenges?.length ?? 0,
+    published: c.published ?? true,
+    availableFrom: c.available_from ?? null,
+    availableUntil: c.available_until ?? null,
   };
 }
 
@@ -162,6 +199,14 @@ const mapChallenge = (c: ApiChallenge): Challenge => ({
   status: c.status ?? "current",
 });
 
+export function mapLesson(l: ApiLesson): Lesson {
+  return { id: String(l.id), title: l.title, position: l.position };
+}
+
+export function mapLessonDetail(l: ApiLesson): LessonDetail {
+  return { ...mapLesson(l), content: l.content ?? "" };
+}
+
 export function mapCourseDetail(c: ApiCourse): CourseDetail {
   const challenges = (c.challenges ?? []).map(mapChallenge);
   return {
@@ -170,6 +215,7 @@ export function mapCourseDetail(c: ApiCourse): CourseDetail {
     done: challenges.filter((ch) => ch.status === "done").length,
     unlockCopy: "se desbloquea uno por día al completar el anterior",
     challenges,
+    lessons: (c.lessons ?? []).map(mapLesson),
   };
 }
 

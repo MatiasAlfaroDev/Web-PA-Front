@@ -78,7 +78,7 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
         <div className="space-y-1.5">
           <h1 className="text-[28px] font-extrabold tracking-tight">{course.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {course.total} desafíos diarios · {course.difficulty} · {course.unlockCopy}
+            {course.total} desafíos diarios · {course.unlockCopy}
           </p>
         </div>
         <div className="text-right">

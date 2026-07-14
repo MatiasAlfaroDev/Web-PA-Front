@@ -16,7 +16,13 @@ export async function action({ request }: Route.ActionArgs) {
   const res = await apiResult<{ id: number }>("/courses", {
     method: "POST",
     token,
-    body: JSON.stringify({ title: form.get("title"), description: form.get("description") }),
+    body: JSON.stringify({
+      title: form.get("title"),
+      description: form.get("description"),
+      published: form.get("published") === "on",
+      available_from: form.get("available_from") || null,
+      available_until: form.get("available_until") || null,
+    }),
   });
   if (!res.ok) return { error: res.data.message ?? "No se pudo crear el curso." };
   return redirect(`/admin/courses/${res.data.id}`);

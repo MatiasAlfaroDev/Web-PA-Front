@@ -1,9 +1,7 @@
-import { Code2, Moon, Sun } from "lucide-react";
-import { Badge } from "~/components/ui/badge";
+import { Code2, Lock, Moon, Sun } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { cn } from "~/lib/utils";
+import { cn, timeUntil } from "~/lib/utils";
 import { toggleTheme } from "~/lib/theme";
-import type { Difficulty } from "~/lib/mappers";
 
 export function SiteLogo({ showWordmark = true }: { showWordmark?: boolean }) {
   return (
@@ -51,10 +49,68 @@ export function InitialsBadge({
   );
 }
 
-export function DifficultyPill({ difficulty }: { difficulty: Difficulty }) {
+// Shown in place of a locked course/lesson's normal content. The teacher
+// controls both the publish flag and the unlock time from the admin panel.
+export function CourseLockNotice({ unlocksAt }: { unlocksAt: string | null }) {
   return (
-    <Badge variant="outline" className="rounded-md text-[11px] font-medium tracking-wide uppercase">
-      {difficulty}
-    </Badge>
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs text-muted-foreground">
+      <Lock className="size-3.5" />
+      {unlocksAt ? `Disponible ${timeUntil(unlocksAt)}` : "Bloqueado por el profesor"}
+    </span>
+  );
+}
+
+// Minimal markdown-lite: ``` fences become code blocks; # / ## become headings;
+// `inline` spans render as inline code. Enough for authored prompt/lesson text.
+export function Prose({ text }: { text: string }) {
+  return (
+    <div className="space-y-3 text-[15.5px] leading-[1.7]">
+      {text.split(/```\n?/).map((block, i) =>
+        i % 2 === 1 ? (
+          <pre
+            key={i}
+            className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-[13px] leading-relaxed"
+          >
+            {block.replace(/\n$/, "")}
+          </pre>
+        ) : (
+          <div key={i} className="space-y-3">
+            {block
+              .trim()
+              .split(/\n\n+/)
+              .map((para, j) => {
+                if (para.startsWith("## "))
+                  return (
+                    <h3 key={j} className="text-base font-semibold">
+                      {para.slice(3)}
+                    </h3>
+                  );
+                if (para.startsWith("# "))
+                  return (
+                    <h2 key={j} className="text-xl font-bold tracking-tight">
+                      {para.slice(2)}
+                    </h2>
+                  );
+                return (
+                  <p key={j} className="whitespace-pre-wrap">
+                    {para.split(/`/).map((seg, k) =>
+                      k % 2 === 1 ? (
+                        <code
+                          key={k}
+                          className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]"
+                        >
+                          {seg}
+                        </code>
+                      ) : (
+                        seg.replace(/\*\*/g, "")
+                      )
+                    )}
+                  </p>
+                );
+              })}
+          </div>
+        )
+      )}
+    </div>
   );
 }

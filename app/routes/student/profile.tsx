@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { Form, Link } from "react-router";
+import { useRef, useState } from "react";
+import { Camera } from "lucide-react";
+import { Form, Link, useFetcher } from "react-router";
 import type { Route } from "./+types/profile";
 import { api, apiResult } from "~/lib/api";
 import { fullName, getTokenOrRedirect, initialsOf, type User } from "~/lib/auth";
-import { mapCourse, type ApiCourse } from "~/lib/mappers";
-import { InitialsBadge } from "~/components/bits";
-import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { courseLockState, mapCourse, type ApiCourse } from "~/lib/mappers";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -22,12 +22,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     api<User>("/profile", { token }),
     api<ApiCourse[]>("/courses", { token }),
   ]);
-  return { user, courses: courses.map(mapCourse) };
+  // Only courses the student can actually enter — locked ones belong on the courses page, not this recap.
+  return { user, courses: courses.map(mapCourse).filter((c) => !courseLockState(c).locked) };
 }
 
 export async function action({ request }: Route.ActionArgs) {
   const token = await getTokenOrRedirect(request);
   const form = await request.formData();
+
+  if (form.get("intent") === "upload-avatar") {
+    const body = new FormData();
+    body.set("avatar", form.get("avatar") as Blob);
+    const res = await apiResult("/profile/avatar", { method: "POST", token, body });
+    return { ok: res.ok, error: res.ok ? undefined : res.data.message };
+  }
+
   const res = await apiResult("/profile", {
     method: "PATCH",
     token,
@@ -39,6 +48,41 @@ export async function action({ request }: Route.ActionArgs) {
   });
   if (!res.ok) return { error: res.data.message ?? "No se pudo guardar tu perfil." };
   return { ok: true };
+}
+
+function AvatarUpload({ user }: { user: User }) {
+  const upload = useFetcher();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const uploading = upload.state !== "idle";
+
+  return (
+    <upload.Form method="post" encType="multipart/form-data">
+      <input type="hidden" name="intent" value="upload-avatar" />
+      <input
+        ref={inputRef}
+        type="file"
+        name="avatar"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => e.currentTarget.form?.requestSubmit()}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        aria-label="Cambiar foto de perfil"
+        className="group relative rounded-full"
+      >
+        <Avatar className="size-16">
+          {user.avatar_url && <AvatarImage src={user.avatar_url} alt="" />}
+          <AvatarFallback className="font-mono text-lg">{initialsOf(user)}</AvatarFallback>
+        </Avatar>
+        <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100">
+          <Camera className="size-5" />
+        </span>
+      </button>
+    </upload.Form>
+  );
 }
 
 export default function Profile({ loaderData, actionData }: Route.ComponentProps) {
@@ -84,9 +128,7 @@ export default function Profile({ loaderData, actionData }: Route.ComponentProps
         </Form>
       ) : (
         <div className="flex items-center gap-4 rounded-xl border bg-card p-6">
-          <Avatar className="size-16">
-            <AvatarFallback className="font-mono text-lg">{initialsOf(user)}</AvatarFallback>
-          </Avatar>
+          <AvatarUpload user={user} />
           <div className="space-y-0.5">
             <p className="text-lg font-bold">{fullName(user)}</p>
             <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -122,7 +164,6 @@ export default function Profile({ loaderData, actionData }: Route.ComponentProps
                 to={`/app/courses/${c.id}`}
                 className="flex items-center gap-4 p-4 hover:bg-muted/40"
               >
-                <InitialsBadge initials={c.initials} />
                 <span className="w-40 shrink-0 font-semibold">{c.title}</span>
                 <Progress value={pct} className="h-1.5 flex-1" />
                 <span className="w-14 shrink-0 text-right font-mono text-xs text-muted-foreground">

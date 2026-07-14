@@ -7,9 +7,11 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api";
 type ApiInit = RequestInit & { token?: string | null };
 
 function headersFor(init?: ApiInit): HeadersInit {
-  const { token, headers } = init ?? {};
+  const { token, headers, body } = init ?? {};
   return {
-    "Content-Type": "application/json",
+    // Omit Content-Type for FormData bodies (file uploads) — fetch sets the
+    // multipart boundary itself; a hardcoded header here would break it.
+    ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     Accept: "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...headers,

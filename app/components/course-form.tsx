@@ -2,16 +2,24 @@ import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
+import { toDatetimeLocal } from "~/lib/utils";
 
-// Course metadata form. The backend models a course as just title + description
-// (course difficulty is derived from its challenges; there's no course-level
-// publish state), so those are the only fields. Rendered inside a parent <Form>.
+// Course metadata form. Course difficulty is still derived server-side from its
+// challenges, but courses now carry a publish flag + an optional availability
+// window (teacher-controlled enable/disable + scheduling). Rendered inside a
+// parent <Form>.
 export function CourseForm({
   title = "",
   description = "",
+  published = true,
+  availableFrom = null,
+  availableUntil = null,
 }: {
   title?: string;
   description?: string;
+  published?: boolean;
+  availableFrom?: string | null;
+  availableUntil?: string | null;
 }) {
   return (
     <Card className="border p-6">
@@ -29,6 +37,20 @@ export function CourseForm({
             defaultValue={description}
             placeholder="¿Qué aprenderán los estudiantes en este curso?"
           />
+        </div>
+        <div className="flex flex-wrap items-end gap-4">
+          <label className="flex items-center gap-2 pb-2 text-sm">
+            <input type="checkbox" name="published" defaultChecked={published} />
+            Publicado
+          </label>
+          <div className="space-y-2">
+            <Label htmlFor="available_from">Disponible desde</Label>
+            <Input id="available_from" name="available_from" type="datetime-local" defaultValue={toDatetimeLocal(availableFrom)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="available_until">Disponible hasta</Label>
+            <Input id="available_until" name="available_until" type="datetime-local" defaultValue={toDatetimeLocal(availableUntil)} />
+          </div>
         </div>
       </CardContent>
     </Card>

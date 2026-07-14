@@ -47,7 +47,13 @@ export async function action({ request, params }: Route.ActionArgs) {
     const res = await apiResult(`/courses/${courseId}`, {
       method: "PATCH",
       token,
-      body: JSON.stringify({ title: form.get("title"), description: form.get("description") }),
+      body: JSON.stringify({
+        title: form.get("title"),
+        description: form.get("description"),
+        published: form.get("published") === "on",
+        available_from: form.get("available_from") || null,
+        available_until: form.get("available_until") || null,
+      }),
     });
     return { ok: res.ok, error: res.ok ? undefined : res.data.message };
   }
@@ -78,6 +84,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       statement: form.get("statement"),
       starter_code: form.get("starter_code"),
       points: Number(form.get("points")) || 100,
+      min_points: form.get("min_points") ? Number(form.get("min_points")) : null,
       difficulty: form.get("difficulty") || "easy",
       published: form.get("published") === "on",
       language_id: 62,
@@ -138,7 +145,13 @@ export default function CourseEdit({ loaderData }: Route.ComponentProps) {
       <Form method="post">
         <input type="hidden" name="intent" value="save-course" />
         <AdminFormHeader title="Editar curso" action={<Button type="submit">Guardar cambios</Button>} />
-        <CourseForm title={course.title} description={course.description ?? ""} />
+        <CourseForm
+          title={course.title}
+          description={course.description ?? ""}
+          published={course.published ?? true}
+          availableFrom={course.available_from}
+          availableUntil={course.available_until}
+        />
       </Form>
 
       <Card className="mt-6 border p-6">
@@ -275,6 +288,17 @@ function ChallengeDialog({
                   <Input id="c-points" name="points" type="number" className="w-[110px]" defaultValue={full?.points ?? editing?.points ?? 100} />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="c-min-points">Puntos mínimos</Label>
+                  <Input
+                    id="c-min-points"
+                    name="min_points"
+                    type="number"
+                    className="w-[110px]"
+                    defaultValue={full?.min_points ?? ""}
+                    placeholder="sin baja"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="c-difficulty">Dificultad</Label>
                   <select
                     id="c-difficulty"
@@ -292,6 +316,9 @@ function ChallengeDialog({
                   Publicado
                 </label>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Los puntos bajan de a 5 por cada estudiante que ya lo resolvió (100, 95, 90…), sin bajar de "Puntos mínimos" — dejalo vacío para que no baje nunca.
+              </p>
 
               <Tabs defaultValue="description">
                 <TabsList variant="line" className="gap-4 border-b">

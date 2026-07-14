@@ -1,14 +1,18 @@
-import { Flame } from "lucide-react";
+import { Flame, Lock } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigation, type ShouldRevalidateFunctionArgs } from "react-router";
 import type { Route } from "./+types/layout";
-import { initialsOf, requireUser } from "~/lib/auth";
+import { api } from "~/lib/api";
+import { getToken, initialsOf, requireUser } from "~/lib/auth";
 import { SiteLogo, ThemeToggle } from "~/components/bits";
-import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { PageSkeleton } from "~/components/skeletons";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireUser(request);
-  return { user };
+  const { locked_until } = await api<{ locked_until: string | null }>("/site-lock", {
+    token: await getToken(request),
+  });
+  return { user, lockedUntil: locked_until };
 }
 
 // Points/streak rarely change between clicks — only refetch the profile after
@@ -24,7 +28,8 @@ function navClass({ isActive }: { isActive: boolean }) {
 }
 
 export default function StudentLayout({ loaderData }: Route.ComponentProps) {
-  const { user } = loaderData;
+  const { user, lockedUntil } = loaderData;
+  const locked = lockedUntil != null && new Date(lockedUntil) > new Date();
   const navigation = useNavigation();
   const location = useLocation();
   // Only swap in a skeleton when actually changing pages — not for in-place
@@ -43,6 +48,9 @@ export default function StudentLayout({ loaderData }: Route.ComponentProps) {
           <NavLink to="/app/courses" className={navClass}>
             Cursos
           </NavLink>
+          <NavLink to="/app/theory" className={navClass}>
+            Teórico
+          </NavLink>
           <NavLink to="/app/leaderboard" className={navClass}>
             Clasificación
           </NavLink>
@@ -58,13 +66,27 @@ export default function StudentLayout({ loaderData }: Route.ComponentProps) {
             <ThemeToggle />
             <Link to="/app/profile" aria-label="Tu perfil">
               <Avatar className="size-8">
+                {user.avatar_url && <AvatarImage src={user.avatar_url} alt="" />}
                 <AvatarFallback className="font-mono text-xs">{initialsOf(user)}</AvatarFallback>
               </Avatar>
             </Link>
           </div>
         </nav>
       </header>
-      {navigatingTo ? <PageSkeleton pathname={navigatingTo} /> : <Outlet />}
+      {locked ? (
+        <main className="flex min-h-[calc(100svh-3.5rem)] flex-col items-center justify-center gap-2 px-8 text-center">
+          <Lock className="size-8 text-muted-foreground" />
+          <p className="text-lg font-semibold">Sitio bloqueado</p>
+          <p className="text-sm text-muted-foreground">
+            Volvé a las{" "}
+            {new Date(lockedUntil!).toLocaleTimeString("es-UY", { hour: "2-digit", minute: "2-digit" })}
+          </p>
+        </main>
+      ) : navigatingTo ? (
+        <PageSkeleton pathname={navigatingTo} />
+      ) : (
+        <Outlet />
+      )}
     </div>
   );
 }
