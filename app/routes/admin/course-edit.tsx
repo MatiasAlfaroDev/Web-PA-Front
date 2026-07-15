@@ -317,7 +317,7 @@ function ChallengeDialog({
                 </label>
               </div>
               <p className="text-xs text-muted-foreground">
-                Los puntos bajan de a 5 por cada estudiante que ya lo resolvió (100, 95, 90…), sin bajar de "Puntos mínimos" — dejalo vacío para que no baje nunca.
+                Los puntos bajan 10 por cada día que pasa sin resolverse desde que se publica, sin bajar de "Puntos mínimos" — dejalo vacío para que no baje nunca.
               </p>
 
               <Tabs defaultValue="description">
