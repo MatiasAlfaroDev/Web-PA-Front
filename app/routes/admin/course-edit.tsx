@@ -6,6 +6,7 @@ import { api, apiResult } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
 import type { ApiChallenge, ApiCourse } from "~/lib/mappers";
 import { AdminFormHeader, CourseForm } from "~/components/course-form";
+import { useActionToast } from "~/hooks/use-action-toast";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -20,7 +21,6 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
-import { cn } from "~/lib/utils";
 
 export function meta() {
   return [{ title: "Editar curso · Programación Avanzada" }];
@@ -54,6 +54,15 @@ export async function action({ request, params }: Route.ActionArgs) {
         available_from: form.get("available_from") || null,
         available_until: form.get("available_until") || null,
       }),
+    });
+    return { ok: res.ok, error: res.ok ? undefined : res.data.message };
+  }
+
+  if (intent === "toggle-challenge-published") {
+    const res = await apiResult(`/challenges/${form.get("challenge_id")}`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify({ published: form.get("published") === "true" }),
     });
     return { ok: res.ok, error: res.ok ? undefined : res.data.message };
   }
@@ -183,16 +192,7 @@ export default function CourseEdit({ loaderData }: Route.ComponentProps) {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="flex-1 font-medium">{c.title}</span>
-                  <span
-                    className={cn(
-                      "rounded-md px-2 py-0.5 text-[11px] font-medium",
-                      c.published
-                        ? "bg-success-soft text-success-soft-foreground"
-                        : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {c.published ? "Publicado" : "Borrador"}
-                  </span>
+                  <PublishToggle challenge={c} />
                   <Button variant="ghost" size="icon" aria-label="Editar desafío" onClick={() => setEditing(c)}>
                     <Pencil />
                   </Button>
@@ -227,6 +227,37 @@ export default function CourseEdit({ loaderData }: Route.ComponentProps) {
   );
 }
 
+function PublishToggle({ challenge }: { challenge: EditChallenge }) {
+  const fetcher = useFetcher<{ ok: boolean; error?: string }>();
+  useActionToast(fetcher, "Listo");
+  const serverPublished = challenge.published ?? true;
+  const pending = fetcher.state !== "idle";
+  const published = pending ? fetcher.formData?.get("published") === "true" : serverPublished;
+
+  return (
+    <fetcher.Form method="post">
+      <input type="hidden" name="intent" value="toggle-challenge-published" />
+      <input type="hidden" name="challenge_id" value={challenge.id} />
+      <input type="hidden" name="published" value={(!serverPublished).toString()} />
+      <label
+        className={
+          "flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium " +
+          (published ? "bg-success-soft text-success-soft-foreground" : "bg-muted text-muted-foreground")
+        }
+      >
+        <input
+          type="checkbox"
+          checked={published}
+          disabled={pending}
+          onChange={(e) => e.currentTarget.form?.requestSubmit()}
+          className="size-3.5 accent-success"
+        />
+        {published ? "Publicado" : "Borrador"}
+      </label>
+    </fetcher.Form>
+  );
+}
+
 function ChallengeDialog({
   editing,
   nextPosition,
@@ -252,10 +283,12 @@ function ChallengeDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [save.state, save.data]);
 
-  const full = isEdit ? detail.data?.challenge : undefined;
-  const loading = isEdit && detail.state !== "idle" && !full;
-  // Reset field defaults when the fetched detail arrives (or when opening "new").
-  const formKey = isEdit ? `edit-${editing?.id}-${full ? "loaded" : "loading"}` : "new";
+  // Gate on the id matching: switching straight from editing challenge A to B
+  // must not render A's still-cached detail as if it were B's (that's how a
+  // save could silently overwrite B with A's title/statement/starter_code).
+  const full = isEdit && detail.data?.challenge.id === editing?.id ? detail.data.challenge : undefined;
+  const loading = isEdit && !full;
+  const formKey = isEdit ? `edit-${editing?.id}` : "new";
 
   return (
     <Dialog open={editing !== undefined} onOpenChange={(open) => !open && onClose()}>
