@@ -42,6 +42,16 @@ export function homeFor(role: Role): string {
   return role === "teacher" ? "/admin/courses" : "/app/courses";
 }
 
+// Fail-open: if the backend's /site-lock endpoint is down or not deployed,
+// treat the site as unlocked rather than 404ing every authenticated page.
+export async function getSiteLock(token: string | null): Promise<string | null> {
+  try {
+    return (await api<{ locked_until: string | null }>("/site-lock", { token })).locked_until;
+  } catch {
+    return null;
+  }
+}
+
 // Loader guard: require a logged-in user (optionally with a role). Returns the
 // live profile so layouts can render points/streak without a second fetch.
 export async function requireUser(request: Request, role?: Role): Promise<User> {

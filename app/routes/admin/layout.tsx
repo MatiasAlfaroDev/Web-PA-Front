@@ -1,8 +1,7 @@
 import { Lock } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigation, type ShouldRevalidateFunctionArgs } from "react-router";
 import type { Route } from "./+types/layout";
-import { api } from "~/lib/api";
-import { getToken, initialsOf, requireUser } from "~/lib/auth";
+import { getSiteLock, getToken, initialsOf, requireUser } from "~/lib/auth";
 import { SiteLogo, ThemeToggle } from "~/components/bits";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
@@ -10,10 +9,8 @@ import { PageSkeleton } from "~/components/skeletons";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireUser(request, "teacher");
-  const { locked_until } = await api<{ locked_until: string | null }>("/site-lock", {
-    token: await getToken(request),
-  });
-  return { user, lockedUntil: locked_until };
+  const lockedUntil = await getSiteLock(await getToken(request));
+  return { user, lockedUntil };
 }
 
 // Same rationale as the student layout: skip refetching the teacher's
@@ -31,7 +28,7 @@ function navClass({ isActive }: { isActive: boolean }) {
 function SiteLockBadge({ lockedUntil }: { lockedUntil: string | null }) {
   const locked = lockedUntil != null && new Date(lockedUntil) > new Date();
   return (
-    <Link
+    <Link prefetch="intent"
       to="/admin/settings"
       className={
         locked
@@ -58,30 +55,30 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
   return (
     <div className="min-h-svh">
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
-        <nav className="mx-auto flex h-14 max-w-[1120px] items-center gap-4 px-8">
-          <Link to="/admin/courses" className="flex items-center gap-2">
+        <nav className="mx-auto flex h-14 max-w-[1400px] items-center gap-4 px-8">
+          <Link prefetch="intent" to="/admin/courses" className="flex items-center gap-2">
             <SiteLogo />
             <Badge variant="outline" className="rounded-md text-[10px] tracking-wide uppercase">
               Profesor
             </Badge>
           </Link>
-          <NavLink to="/admin/courses" end className={({ isActive }) => `ml-2 ${navClass({ isActive })}`}>
+          <NavLink prefetch="intent" to="/admin/courses" end className={({ isActive }) => `ml-2 ${navClass({ isActive })}`}>
             Mis cursos
           </NavLink>
-          <NavLink to="/admin/theory" className={navClass}>
+          <NavLink prefetch="intent" to="/admin/theory" className={navClass}>
             Teórico
           </NavLink>
-          <NavLink to="/admin/students" className={navClass}>
+          <NavLink prefetch="intent" to="/admin/students" className={navClass}>
             Estudiantes
           </NavLink>
-          <NavLink to="/admin/settings" className={navClass}>
+          <NavLink prefetch="intent" to="/admin/settings" className={navClass}>
             Ajustes
           </NavLink>
 
           <div className="ml-auto flex items-center gap-3">
             <SiteLockBadge lockedUntil={lockedUntil} />
             <ThemeToggle />
-            <Link to="/app/profile" aria-label="Tu perfil">
+            <Link prefetch="intent" to="/app/profile" aria-label="Tu perfil">
               <Avatar className="size-8">
                 {user.avatar_url && <AvatarImage src={user.avatar_url} alt="" />}
                 <AvatarFallback className="font-mono text-xs">{initialsOf(user)}</AvatarFallback>

@@ -30,8 +30,8 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function CourseNew({ actionData }: Route.ComponentProps) {
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
-      <Link
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
+      <Link prefetch="intent"
         to="/admin/courses"
         className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
       >

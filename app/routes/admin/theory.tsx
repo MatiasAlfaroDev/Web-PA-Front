@@ -29,7 +29,7 @@ export default function AdminTheory({ loaderData }: Route.ComponentProps) {
   const { courses } = loaderData;
 
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <div className="mb-7 space-y-1">
         <h1 className="text-[28px] font-extrabold tracking-tight">Teórico</h1>
         <p className="text-sm text-muted-foreground">Material teórico por curso</p>
@@ -68,7 +68,7 @@ export default function AdminTheory({ loaderData }: Route.ComponentProps) {
                 <TableCell className="text-sm text-muted-foreground">{timeAgo(c.updated_at)}</TableCell>
                 <TableCell>
                   <Button asChild variant="ghost" size="icon" aria-label={`Gestionar teórico de ${c.title}`}>
-                    <Link to={`/admin/theory/${c.id}`}>
+                    <Link prefetch="intent" to={`/admin/theory/${c.id}`}>
                       <Pencil />
                     </Link>
                   </Button>

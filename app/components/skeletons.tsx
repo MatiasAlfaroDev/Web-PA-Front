@@ -8,7 +8,7 @@ function Block({ className }: { className: string }) {
 
 function CoursesSkeleton() {
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <div className="mb-7 space-y-2">
         <Block className="h-8 w-48" />
         <Block className="h-4 w-64" />
@@ -32,7 +32,7 @@ function CoursesSkeleton() {
 
 function CourseDetailSkeleton() {
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <Block className="mb-6 h-4 w-32" />
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
@@ -75,7 +75,7 @@ function ChallengeSkeleton() {
 
 function LeaderboardSkeleton() {
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <div className="mb-7 space-y-2">
         <Block className="h-8 w-56" />
         <Block className="h-4 w-72" />
@@ -96,7 +96,7 @@ function LeaderboardSkeleton() {
 
 function ProfileSkeleton() {
   return (
-    <main className="mx-auto max-w-[1120px] space-y-6 px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] space-y-6 px-8 py-10 pb-20">
       <Block className="h-8 w-40" />
       <div className="flex items-center gap-4 rounded-xl border bg-card p-6">
         <Block className="size-16 rounded-full" />
@@ -116,7 +116,7 @@ function ProfileSkeleton() {
 
 function AdminCoursesSkeleton() {
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <div className="mb-7 space-y-2">
         <Block className="h-8 w-40" />
         <Block className="h-4 w-56" />
@@ -135,7 +135,7 @@ function AdminCoursesSkeleton() {
 
 function FormSkeleton() {
   return (
-    <main className="mx-auto max-w-[1120px] space-y-4 px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] space-y-4 px-8 py-10 pb-20">
       <Block className="h-8 w-56" />
       <Block className="h-40 w-full" />
       <Block className="h-64 w-full" />
@@ -145,7 +145,7 @@ function FormSkeleton() {
 
 function GenericSkeleton() {
   return (
-    <main className="mx-auto max-w-[1120px] space-y-4 px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] space-y-4 px-8 py-10 pb-20">
       <Block className="h-8 w-56" />
       <Block className="h-40 w-full" />
     </main>

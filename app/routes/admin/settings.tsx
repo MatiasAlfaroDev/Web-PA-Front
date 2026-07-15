@@ -1,7 +1,7 @@
 import { useFetcher } from "react-router";
 import type { Route } from "./+types/settings";
 import { api, apiResult } from "~/lib/api";
-import { getToken, getTokenOrRedirect } from "~/lib/auth";
+import { getSiteLock, getTokenOrRedirect } from "~/lib/auth";
 import type { ApiCourse } from "~/lib/mappers";
 import { useActionToast } from "~/hooks/use-action-toast";
 import { Button } from "~/components/ui/button";
@@ -15,11 +15,11 @@ export function meta() {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const token = await getTokenOrRedirect(request);
-  const [courses, lock] = await Promise.all([
+  const [courses, lockedUntil] = await Promise.all([
     api<ApiCourse[]>("/courses", { token }),
-    api<{ locked_until: string | null }>("/site-lock", { token }),
+    getSiteLock(token),
   ]);
-  return { courses, lockedUntil: lock.locked_until };
+  return { courses, lockedUntil };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -167,7 +167,7 @@ export default function AdminSettings({ loaderData }: Route.ComponentProps) {
   const bulkBusy = bulk.state !== "idle";
 
   return (
-    <main className="mx-auto max-w-[1120px] space-y-6 px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] space-y-6 px-8 py-10 pb-20">
       <h1 className="text-[28px] font-extrabold tracking-tight">Ajustes</h1>
 
       <SiteLockCard lockedUntil={lockedUntil} />

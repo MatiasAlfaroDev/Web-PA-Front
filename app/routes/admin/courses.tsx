@@ -32,7 +32,7 @@ export default function AdminCourses({ loaderData }: Route.ComponentProps) {
   const { courses, studentCount } = loaderData;
 
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-[28px] font-extrabold tracking-tight">Mis cursos</h1>
@@ -41,7 +41,7 @@ export default function AdminCourses({ loaderData }: Route.ComponentProps) {
           </p>
         </div>
         <Button asChild>
-          <Link to="/admin/courses/new">
+          <Link prefetch="intent" to="/admin/courses/new">
             <Plus />
             Nuevo curso
           </Link>
@@ -86,7 +86,7 @@ export default function AdminCourses({ loaderData }: Route.ComponentProps) {
                 <TableCell className="text-sm text-muted-foreground">{timeAgo(c.updated_at)}</TableCell>
                 <TableCell>
                   <Button asChild variant="ghost" size="icon" aria-label={`Editar ${c.title}`}>
-                    <Link to={`/admin/courses/${c.id}`}>
+                    <Link prefetch="intent" to={`/admin/courses/${c.id}`}>
                       <Pencil />
                     </Link>
                   </Button>

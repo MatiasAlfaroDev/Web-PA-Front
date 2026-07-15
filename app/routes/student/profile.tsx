@@ -96,7 +96,7 @@ export default function Profile({ loaderData, actionData }: Route.ComponentProps
   ];
 
   return (
-    <main className="mx-auto max-w-[1120px] space-y-6 px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] space-y-6 px-8 py-10 pb-20">
       <h1 className="text-[28px] font-extrabold tracking-tight">Tu perfil</h1>
 
       {editing ? (
@@ -159,7 +159,7 @@ export default function Profile({ loaderData, actionData }: Route.ComponentProps
           {courses.map((c) => {
             const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
             return (
-              <Link
+              <Link prefetch="intent"
                 key={c.id}
                 to={`/app/courses/${c.id}`}
                 className="flex items-center gap-4 p-4 hover:bg-muted/40"

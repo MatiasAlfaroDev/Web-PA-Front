@@ -34,7 +34,7 @@ function DayTile({ c, courseId }: { c: Challenge; courseId: string }) {
 
   const done = c.status === "done";
   return (
-    <Link
+    <Link prefetch="intent"
       to={`/app/courses/${courseId}/challenges/${c.id}`}
       className={cn(
         "flex min-h-24 flex-col gap-2 rounded-xl border-[1.5px] p-4 transition-colors",
@@ -65,8 +65,8 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
   const pct = Math.round((course.done / course.total) * 100);
 
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
-      <Link
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
+      <Link prefetch="intent"
         to="/app/courses"
         className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
       >

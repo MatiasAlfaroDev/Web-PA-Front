@@ -26,7 +26,7 @@ const rankColor: Record<number, string> = {
 
 export default function Leaderboard({ loaderData }: Route.ComponentProps) {
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <header className="mb-7">
         <h1 className="text-[28px] font-extrabold tracking-tight">Clasificación</h1>
         <p className="text-sm text-muted-foreground">Ordenado por puntos totales de todos los cursos de este período</p>

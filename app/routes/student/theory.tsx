@@ -19,7 +19,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Theory({ loaderData }: Route.ComponentProps) {
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <header className="mb-7">
         <h1 className="text-[28px] font-extrabold tracking-tight">Teórico</h1>
         <p className="text-sm text-muted-foreground">Material teórico por curso</p>
@@ -55,7 +55,7 @@ export default function Theory({ loaderData }: Route.ComponentProps) {
               {content}
             </div>
           ) : (
-            <Link key={course.id} to={`/app/theory/${course.id}`} className={className}>
+            <Link prefetch="intent" key={course.id} to={`/app/theory/${course.id}`} className={className}>
               {content}
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </Link>

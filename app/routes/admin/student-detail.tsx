@@ -44,8 +44,8 @@ export default function StudentDetail({ loaderData }: Route.ComponentProps) {
   const [viewing, setViewing] = useState<ApiStudentSubmission | null>(null);
 
   return (
-    <main className="mx-auto max-w-[1120px] space-y-6 px-8 py-10 pb-20">
-      <Link
+    <main className="mx-auto max-w-[1400px] space-y-6 px-8 py-10 pb-20">
+      <Link prefetch="intent"
         to="/admin/students"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
       >

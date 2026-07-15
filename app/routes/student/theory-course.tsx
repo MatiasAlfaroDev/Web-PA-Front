@@ -17,7 +17,7 @@ export function meta() {
 
 function LessonRow({ l, courseId }: { l: Lesson; courseId: string }) {
   return (
-    <Link
+    <Link prefetch="intent"
       to={`/app/theory/${courseId}/lessons/${l.id}`}
       className="flex items-center gap-3 rounded-xl border-[1.5px] bg-card p-4 transition-colors hover:bg-muted/40"
     >
@@ -31,8 +31,8 @@ export default function TheoryCourse({ loaderData }: Route.ComponentProps) {
   const { course } = loaderData;
 
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
-      <Link
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
+      <Link prefetch="intent"
         to="/app/theory"
         className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
       >

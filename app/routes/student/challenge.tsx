@@ -130,7 +130,7 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
   return (
     <div className="flex h-[calc(100svh-3.5rem)] flex-col">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-8 py-3">
-        <Link
+        <Link prefetch="intent"
           to={`/app/courses/${challenge.courseId}`}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
         >

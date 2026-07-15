@@ -19,7 +19,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Courses({ loaderData }: Route.ComponentProps) {
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <header className="mb-7">
         <h1 className="text-[28px] font-extrabold tracking-tight">Tus cursos</h1>
         <p className="text-sm text-muted-foreground">Retomá donde lo dejaste</p>
@@ -68,7 +68,7 @@ export default function Courses({ loaderData }: Route.ComponentProps) {
               {content}
             </div>
           ) : (
-            <Link key={course.id} to={`/app/courses/${course.id}`} className={className}>
+            <Link prefetch="intent" key={course.id} to={`/app/courses/${course.id}`} className={className}>
               {content}
             </Link>
           );

@@ -28,7 +28,7 @@ export default function Students({ loaderData }: Route.ComponentProps) {
   const { students } = loaderData;
 
   return (
-    <main className="mx-auto max-w-[1120px] px-8 py-10 pb-20">
+    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
       <header className="mb-7">
         <h1 className="text-[28px] font-extrabold tracking-tight">Estudiantes</h1>
         <p className="text-sm text-muted-foreground">
@@ -51,7 +51,7 @@ export default function Students({ loaderData }: Route.ComponentProps) {
             {students.map((s) => (
               <TableRow key={s.id}>
                 <TableCell className="pl-4">
-                  <Link
+                  <Link prefetch="intent"
                     to={`/admin/students/${s.id}`}
                     className="flex items-center gap-3 hover:underline"
                   >
