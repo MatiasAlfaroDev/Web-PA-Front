@@ -3,7 +3,7 @@ import { Form, Link, redirect } from "react-router";
 import type { Route } from "./+types/register";
 import { apiResult } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { getToken } from "~/lib/auth";
+import { getToken, homeFor, requireUser } from "~/lib/auth";
 import { AuthShell } from "~/components/auth-shell";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -34,8 +34,9 @@ const STRENGTH = [
 ] as const;
 
 export async function loader({ request }: Route.LoaderArgs) {
-  if (await getToken(request)) throw redirect("/app/courses");
-  return null;
+  if (!(await getToken(request))) return null;
+  const user = await requireUser(request);
+  return redirect(homeFor(user.role));
 }
 
 export async function action({ request }: Route.ActionArgs) {
