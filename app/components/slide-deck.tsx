@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 import { Prose } from "~/components/bits";
 import { Button } from "~/components/ui/button";
@@ -34,6 +34,7 @@ export function SlideDeck({
   const wrapper = useRef<HTMLDivElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const dir = useSlideDirection(slide);
+  const { stage, content, fit } = useFitToStage(slide, slides);
 
   const go = useCallback(
     (delta: number) => {
@@ -89,15 +90,21 @@ export function SlideDeck({
       )}
     >
       <div
+        ref={stage}
+        style={{ "--deck-fit": fit } as React.CSSProperties}
         className={cn(
           "deck-stage relative overflow-hidden rounded-xl border bg-card",
           fullscreen ? "min-h-0 flex-1" : "aspect-[4/3] sm:aspect-[16/9]",
         )}
       >
-        {/* Short slides sit centred on the stage; long ones grow past it and
-            scroll, because min-h-full lets the inner block exceed the frame. */}
+        {/* Las diapositivas cortas quedan centradas; las largas las achica
+            useFitToStage hasta que entren, porque una diapositiva proyectada
+            que hay que scrollear es una diapositiva que nadie ve entera. */}
         <div key={slide} data-slide-dir={dir} className="h-full overflow-y-auto">
-          <div className="flex min-h-full flex-col justify-center px-[6cqmin] py-[5cqmin]">
+          <div
+            ref={content}
+            className="flex min-h-full flex-col justify-center px-[6cqmin] py-[5cqmin]"
+          >
             <Prose text={slides[slide] ?? ""} className="deck-copy max-w-[52ch]" />
           </div>
         </div>
@@ -186,6 +193,52 @@ function SlideRail({
       ))}
     </div>
   );
+}
+
+/**
+ * Encoge la diapositiva hasta que entra en el escenario. Mide después del
+ * layout, siempre partiendo de escala 1, así una diapositiva corta nunca
+ * hereda el achique de la anterior. Vuelve a medir cuando cambia el tamaño
+ * del escenario, que es lo que pasa al entrar y salir de pantalla completa.
+ */
+function useFitToStage(slide: number, slides: string[]) {
+  const stage = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState(1);
+
+  useLayoutEffect(() => {
+    setFit(1);
+  }, [slide, slides]);
+
+  useLayoutEffect(() => {
+    const stageEl = stage.current;
+    const contentEl = content.current;
+    if (!stageEl || !contentEl) return;
+
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const available = stageEl.clientHeight;
+        const needed = contentEl.scrollHeight;
+        // El piso evita que una diapositiva enorme quede ilegible: a partir de
+        // ahí es mejor cortarla en dos que seguir achicando.
+        if (needed > available + 1) {
+          setFit((f) => Math.max(0.5, f * (available / needed)));
+        }
+      });
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stageEl);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [slide, slides, fit]);
+
+  return { stage, content, fit };
 }
 
 /** "forward" / "back" for the slide-change animation; undefined on first render.

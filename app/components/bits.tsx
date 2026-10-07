@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ArrowLeft, Code2, Flame, LogOut, Lock, Moon, User } from "lucide-react";
+import { ArrowLeft, Code2, Flame, LogOut, Lock, Moon, Sun, User } from "lucide-react";
 import { Form, Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,7 @@ import {
 import { Switch } from "~/components/ui/switch";
 import { fullName, initialsOf, type User as AppUser } from "~/lib/auth";
 import { cn, timeUntil } from "~/lib/utils";
-import { isDarkTheme, setTheme } from "~/lib/theme";
+import { isDarkTheme, setTheme, toggleTheme } from "~/lib/theme";
 
 export function SiteLogo({ showWordmark = true }: { showWordmark?: boolean }) {
   return (
@@ -20,6 +21,17 @@ export function SiteLogo({ showWordmark = true }: { showWordmark?: boolean }) {
       <Code2 className="size-5 text-success-ink" strokeWidth={2.5} />
       {showWordmark && <span className="text-[17px] tracking-tight">PA</span>}
     </span>
+  );
+}
+
+// For surfaces with no account behind them, like the public presentation:
+// the icon comes from the theme class in CSS, so there is no state to hydrate.
+export function ThemeToggle() {
+  return (
+    <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Cambiar tema">
+      <Moon className="dark:hidden" />
+      <Sun className="hidden dark:block" />
+    </Button>
   );
 }
 
@@ -286,6 +298,31 @@ export function PublishChip({ published }: { published?: boolean }) {
 // Every size inside is em-relative, so the caller sets one font-size on the
 // wrapper and the whole block scales with it. That is what lets the same
 // renderer serve a reading column and a projector-sized slide.
+// A paragraph that is nothing but an image: the alt text doubles as the caption,
+// so a lesson carries one string per figure instead of a second syntax for it.
+const PROSE_IMAGE = /^!\[([^\]]*)\]\((\S+)\)$/;
+
+// `código` y **negrita** dentro de una línea, compartido por párrafos y listas.
+function Inline({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/`/).map((seg, i) =>
+        i % 2 === 1 ? (
+          <code key={i} className="rounded bg-muted px-[0.35em] py-[0.1em] font-mono text-[0.85em]">
+            {seg}
+          </code>
+        ) : (
+          <span key={i}>
+            {seg.split(/\*\*(.+?)\*\*/g).map((part, j) =>
+              j % 2 === 1 ? <strong key={j}>{part}</strong> : part,
+            )}
+          </span>
+        ),
+      )}
+    </>
+  );
+}
+
 export function Prose({ text, className }: { text: string; className?: string }) {
   return (
     <div className={cn("space-y-[0.9em] text-[15.5px] leading-[1.7]", className)}>
@@ -315,20 +352,50 @@ export function Prose({ text, className }: { text: string; className?: string })
                       {para.slice(2)}
                     </h2>
                   );
+                const image = PROSE_IMAGE.exec(para.trim());
+                if (image)
+                  return (
+                    <figure key={j} className="space-y-[0.4em]">
+                      <img
+                        src={image[2]}
+                        alt={image[1]}
+                        loading="lazy"
+                        className="mx-auto block max-w-full rounded-md border bg-muted"
+                      />
+                      {image[1] ? (
+                        <figcaption className="text-center text-[0.8em] text-muted-foreground">
+                          {image[1]}
+                        </figcaption>
+                      ) : null}
+                    </figure>
+                  );
+                // Un párrafo donde todas las líneas son viñetas es una lista.
+                // En una diapositiva la diferencia entre lista y texto corrido
+                // es la mitad de la legibilidad.
+                const lines = para.split("\n");
+                const numbered = lines.every((l) => /^\s*\d+\. \S/.test(l));
+                if (numbered || lines.every((l) => /^\s*[-*] \S/.test(l))) {
+                  const List = numbered ? "ol" : "ul";
+                  return (
+                    <List
+                      key={j}
+                      className={cn(
+                        "space-y-[0.35em] pl-[1.3em]",
+                        numbered ? "list-decimal" : "list-disc",
+                      )}
+                    >
+                      {lines.map((line, k) => (
+                        <li key={k} className="pl-[0.15em] marker:text-muted-foreground">
+                          <Inline text={line.replace(/^\s*(?:[-*]|\d+\.) /, "")} />
+                        </li>
+                      ))}
+                    </List>
+                  );
+                }
+
                 return (
                   <p key={j} className="whitespace-pre-wrap">
-                    {para.split(/`/).map((seg, k) =>
-                      k % 2 === 1 ? (
-                        <code
-                          key={k}
-                          className="rounded bg-muted px-[0.35em] py-[0.1em] font-mono text-[0.85em]"
-                        >
-                          {seg}
-                        </code>
-                      ) : (
-                        seg.replace(/\*\*/g, "")
-                      ),
-                    )}
+                    <Inline text={para} />
                   </p>
                 );
               })}

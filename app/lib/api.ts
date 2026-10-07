@@ -37,8 +37,20 @@ export interface ApiResult<T> {
 }
 
 // Non-throwing variant for actions that need to show validation messages.
+// A dead backend (deploy caído, API apagada) comes back as a normal failed
+// result too, so forms say what happened instead of crashing to the error
+// boundary with a stack trace.
 export async function apiResult<T = unknown>(path: string, init?: ApiInit): Promise<ApiResult<T>> {
-  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers: headersFor(init) });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, { ...init, headers: headersFor(init) });
+  } catch {
+    return {
+      ok: false,
+      status: 0,
+      data: { message: "No se pudo conectar con el servidor. Probá de nuevo en unos minutos." } as ApiResult<T>["data"],
+    };
+  }
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, data };
 }

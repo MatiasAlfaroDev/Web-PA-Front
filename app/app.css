@@ -280,8 +280,17 @@ summary {
   container-name: stage;
 }
 .deck-copy {
-  font-size: clamp(1rem, 5cqmin, 3rem);
+  /* --deck-fit lo baja el mazo cuando la diapositiva no entra en el escenario
+     (ver useFitToStage); en la mayoría vale 1 y no hace nada. */
+  font-size: calc(clamp(1rem, 5cqmin, 3rem) * var(--deck-fit, 1));
   line-height: 1.45;
+}
+
+/* A figure on the stage is capped against the slide, not the column: a tall
+   screenshot would otherwise push the slide into scrolling mid-class. */
+.deck-copy figure img {
+  max-height: calc(56cqmin * var(--deck-fit, 1));
+  width: auto;
 }
 
 /* Slide change: a short, directional nudge so the class can see that the
