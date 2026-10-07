@@ -19,6 +19,7 @@ export default [
 
   // Loader-only resource routes (outside layouts to avoid re-running guards)
   route("app/submissions/:submissionId", "routes/submission-status.tsx"),
+  route("app/live", "routes/live.tsx"),
   route("admin/challenges/:challengeId", "routes/admin/challenge-data.tsx"),
   route("admin/lessons/:lessonId", "routes/admin/lesson-data.tsx"),
 
@@ -31,6 +32,7 @@ export default [
       route("theory", "routes/student/theory.tsx"),
       route("theory/:courseId", "routes/student/theory-course.tsx"),
       route("theory/:courseId/lessons/:lessonId", "routes/student/lesson.tsx"),
+      route("theory/:courseId/lessons/:lessonId/slides", "routes/student/lesson-slides.tsx"),
       route("profile", "routes/student/profile.tsx"),
       route("leaderboard", "routes/student/leaderboard.tsx"),
     ]),
@@ -44,6 +46,7 @@ export default [
       route("courses/:courseId", "routes/admin/course-edit.tsx"),
       route("theory", "routes/admin/theory.tsx"),
       route("theory/:courseId", "routes/admin/theory-course.tsx"),
+      route("theory/:courseId/lessons/:lessonId/present", "routes/admin/present.tsx"),
       route("settings", "routes/admin/settings.tsx"),
       route("students", "routes/admin/students.tsx"),
       route("students/:studentId", "routes/admin/student-detail.tsx"),

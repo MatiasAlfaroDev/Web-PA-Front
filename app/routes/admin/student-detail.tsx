@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { ArrowLeft, Code2 } from "lucide-react";
-import { Link } from "react-router";
+import { Code2 } from "lucide-react";
 import type { Route } from "./+types/student-detail";
 import { api } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
 import type { ApiStudentDetail, ApiStudentSubmission } from "~/lib/mappers";
-import { InitialsBadge } from "~/components/bits";
+import { BackLink, Figure, InitialsBadge } from "~/components/bits";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog";
@@ -45,39 +44,46 @@ export default function StudentDetail({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="mx-auto max-w-[1400px] space-y-6 px-8 py-10 pb-20">
-      <Link prefetch="intent"
-        to="/admin/students"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Estudiantes
-      </Link>
+      <BackLink to="/admin/students">Estudiantes</BackLink>
 
-      <div className="flex items-center gap-4 rounded-xl border bg-card p-6">
-        <InitialsBadge
-          initials={`${student.first_name[0] ?? ""}${student.last_name[0] ?? ""}`.toUpperCase()}
-        />
-        <div className="space-y-0.5">
-          <p className="text-lg font-bold">
-            {student.first_name} {student.last_name}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {student.email} {student.ci && `· CI ${student.ci}`}
-          </p>
+      <header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-b pb-6">
+        <div className="flex items-center gap-4">
+          <InitialsBadge
+            size="lg"
+            initials={`${student.first_name[0] ?? ""}${student.last_name[0] ?? ""}`.toUpperCase()}
+          />
+          <div className="min-w-0 space-y-0.5">
+            <h1 className="page-title">
+              {student.first_name} {student.last_name}
+            </h1>
+            <p className="truncate text-sm text-muted-foreground">{student.email}</p>
+            {student.ci && <p className="num text-xs text-muted-foreground">CI {student.ci}</p>}
+          </div>
         </div>
-      </div>
+        <div className="flex items-end gap-8">
+          <Figure value={progress.filter((p) => Number(p.solved) > 0).length} label="resueltos" tone="accent" />
+          <Figure value={recent_submissions.length} label="entregas recientes" />
+        </div>
+      </header>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold">Progreso por desafío</h2>
-        <div className="divide-y rounded-xl border bg-card">
+        <h2 className="section-title">Progreso por desafío</h2>
+        <div className="divide-y border-t">
           {progress.map((p) => (
-            <div key={p.id} className="flex items-center gap-4 px-4 py-3">
-              <span className="flex-1 font-medium">{p.title}</span>
-              <span className="font-mono text-xs text-muted-foreground">{p.attempts} intentos</span>
-              <span className="font-mono text-xs text-muted-foreground">mejor: {p.best_score} pts</span>
+            <div key={p.id} className="flex items-center gap-4 py-3">
+              <span className="min-w-0 flex-1 truncate font-medium">{p.title}</span>
+              <span className="num shrink-0 text-xs text-muted-foreground">
+                {p.attempts} intentos
+              </span>
+              <span className="num shrink-0 text-xs text-muted-foreground">
+                mejor {p.best_score} pts
+              </span>
               <Badge
                 variant="outline"
-                className={cn(Number(p.solved) > 0 && "border-success text-success")}
+                className={cn(
+                  "shrink-0",
+                  Number(p.solved) > 0 && "border-success text-success-ink",
+                )}
               >
                 {Number(p.solved) > 0 ? "Resuelto" : "Sin resolver"}
               </Badge>
@@ -87,16 +93,16 @@ export default function StudentDetail({ loaderData }: Route.ComponentProps) {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold">Últimas entregas</h2>
-        <div className="divide-y rounded-xl border bg-card">
+        <h2 className="section-title">Últimas entregas</h2>
+        <div className="divide-y border-t">
           {recent_submissions.length === 0 && (
-            <p className="p-6 text-center text-sm text-muted-foreground">Todavía no hay entregas.</p>
+            <p className="py-6 text-sm text-muted-foreground">Todavía no hay entregas.</p>
           )}
           {recent_submissions.map((s) => (
-            <div key={s.id} className="flex items-center gap-4 px-4 py-3">
-              <span className="flex-1 font-medium">{s.challenge.title}</span>
-              <span className="font-mono text-xs text-muted-foreground">
-                {s.passed_count}/{s.total_count} casos · {s.score} pts
+            <div key={s.id} className="flex items-center gap-4 py-3">
+              <span className="min-w-0 flex-1 truncate font-medium">{s.challenge.title}</span>
+              <span className="num shrink-0 text-xs text-muted-foreground">
+                {s.passed_count}/{s.total_count} casos, {s.score} pts
               </span>
               <Badge className={STATUS_CLASS[s.status]}>{STATUS_LABEL[s.status]}</Badge>
               <span className="w-20 shrink-0 text-right text-xs text-muted-foreground">

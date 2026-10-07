@@ -11,6 +11,39 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+/* Type scale. One family (Geist) for everything; hierarchy comes from size,
+   weight and tracking, never from a second typeface.
+     page-title     page's single h1
+     section-title  h2 inside a page
+     eyebrow        small caps label — rationed, see the usage note below
+     num            any figure the eye compares across rows (tabular mono)
+   Mono is for numbers and code only; it is not a decoration. */
+@utility page-title {
+  font-size: 1.625rem;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.021em;
+  text-wrap: balance;
+}
+@utility section-title {
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+@utility eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 html,
 body {
   @apply bg-background text-foreground;
@@ -57,7 +90,12 @@ summary {
   --color-foreground: var(--foreground);
   --color-background: var(--background);
   /* semantic status colors (soft chips + editor) */
+  --color-brand: var(--brand);
   --color-success: var(--success);
+  --color-success-ink: var(--success-ink);
+  --color-rank-gold: var(--rank-gold);
+  --color-rank-silver: var(--rank-silver);
+  --color-rank-bronze: var(--rank-bronze);
   --color-success-soft: var(--success-soft);
   --color-success-soft-foreground: var(--success-soft-foreground);
   --color-warning-soft: var(--warning-soft);
@@ -78,12 +116,17 @@ summary {
   --card-foreground: #1c1917;
   --popover: #ffffff;
   --popover-foreground: #1c1917;
-  --primary: #16a34a;
+  /* Green stays the brand. Two greens, two jobs: --brand is the decorative
+     fill (progress, focus ring, the unlock pulse) and --primary is the one
+     that carries white label text, so it has to clear 4.5:1 against white
+     (#16a34a only reaches 3.3:1). --success-ink is accent text on a surface. */
+  --brand: #16a34a;
+  --primary: #15803d;
   --primary-foreground: #ffffff;
   --secondary: #f5f5f4;
   --secondary-foreground: #1c1917;
   --muted: #f5f5f4;
-  --muted-foreground: #78716c;
+  --muted-foreground: #726b66;
   --accent: #f5f5f4;
   --accent-foreground: #1c1917;
   --destructive: #b91c1c;
@@ -91,9 +134,13 @@ summary {
   --border-strong: #d6d3d1;
   --input: #e7e5e4;
   --ring: #16a34a;
-  --success: #16a34a;
+  --success: #15803d;
+  --success-ink: #15803d;
   --success-soft: #dcfce7;
   --success-soft-foreground: #166534;
+  --rank-gold: #a16207;
+  --rank-silver: #57534e;
+  --rank-bronze: #9a3412;
   --warning-soft: #fef3c7;
   --warning-soft-foreground: #92400e;
   --danger-soft: #fee2e2;
@@ -116,7 +163,8 @@ summary {
   --card-foreground: #f5f5f4;
   --popover: #1c1917;
   --popover-foreground: #f5f5f4;
-  --primary: #16a34a;
+  --brand: #22c55e;
+  --primary: #15803d;
   --primary-foreground: #ffffff;
   --secondary: #292524;
   --secondary-foreground: #f5f5f4;
@@ -128,10 +176,14 @@ summary {
   --border: #292524;
   --border-strong: #44403c;
   --input: #292524;
-  --ring: #16a34a;
-  --success: #16a34a;
+  --ring: #22c55e;
+  --success: #15803d;
+  --success-ink: #4ade80;
   --success-soft: #14532d;
   --success-soft-foreground: #86efac;
+  --rank-gold: #fcd34d;
+  --rank-silver: #d6d3d1;
+  --rank-bronze: #fdba74;
   --warning-soft: #422006;
   --warning-soft-foreground: #fcd34d;
   --danger-soft: #450a0a;
@@ -158,14 +210,15 @@ summary {
   }
 }
 
-/* Signature "unlock" cue: the current/next challenge pulses a soft green ring. */
+/* Signature "unlock" cue: the current/next challenge pulses a soft green ring.
+   Driven by --brand so it tracks the theme instead of a frozen literal. */
 @keyframes unlock-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.35);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 35%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
+    box-shadow: 0 0 0 6px transparent;
   }
 }
 .animate-unlock-pulse {
@@ -216,4 +269,43 @@ summary {
 }
 .monokai .token.annotation {
   color: #a6e22e;
+}
+
+/* --- Slides -------------------------------------------------------------
+   The deck stage is a sized container so slide text scales with the stage
+   rather than the viewport: the same deck is legible on a projector, in the
+   teacher's presenter pane and in a phone-width student view. */
+.deck-stage {
+  container-type: size;
+  container-name: stage;
+}
+.deck-copy {
+  font-size: clamp(1rem, 5cqmin, 3rem);
+  line-height: 1.45;
+}
+
+/* Slide change: a short, directional nudge so the class can see that the
+   content advanced (and which way) instead of it swapping silently. */
+@keyframes slide-in-forward {
+  from {
+    opacity: 0;
+    transform: translate3d(2.5%, 0, 0);
+  }
+}
+@keyframes slide-in-back {
+  from {
+    opacity: 0;
+    transform: translate3d(-2.5%, 0, 0);
+  }
+}
+[data-slide-dir="forward"] {
+  animation: slide-in-forward 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-slide-dir="back"] {
+  animation: slide-in-back 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slide-dir] {
+    animation: none;
+  }
 }

@@ -38,7 +38,7 @@ export default function ResetPassword({ actionData }: Route.ComponentProps) {
     <AuthShell>
       <Form method="post" className="w-full max-w-[360px] space-y-5">
         <div className="space-y-1.5">
-          <h2 className="text-2xl font-bold tracking-tight">Creá una nueva contraseña</h2>
+          <h2 className="page-title">Creá una nueva contraseña</h2>
           <p className="text-sm text-muted-foreground">Elegí una contraseña para {email || "tu cuenta"}.</p>
         </div>
 

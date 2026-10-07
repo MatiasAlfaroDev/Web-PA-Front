@@ -6,23 +6,50 @@ function Block({ className }: { className: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className}`} />;
 }
 
+function Head({ wide = "w-48" }: { wide?: string }) {
+  return (
+    <div className="mb-8 space-y-2">
+      <Block className={`h-7 ${wide}`} />
+      <Block className="h-4 w-64" />
+    </div>
+  );
+}
+
+// Ruled list: theory, leaderboard, lesson lists. One shape covers all of them
+// because they are deliberately the same layout family.
+function RuledSkeleton({ rows = 8, narrow = false }: { rows?: number; narrow?: boolean }) {
+  return (
+    <main className={`mx-auto px-8 py-10 pb-20 ${narrow ? "max-w-[900px]" : "max-w-[1400px]"}`}>
+      <Head />
+      <div className="divide-y border-y">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 py-4">
+            <Block className="h-4 w-6 shrink-0" />
+            <Block className="h-4 w-56" />
+            <Block className="ml-auto h-4 w-16" />
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
+
 function CoursesSkeleton() {
   return (
     <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <div className="mb-7 space-y-2">
-        <Block className="h-8 w-48" />
-        <Block className="h-4 w-64" />
-      </div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-[18px]">
+      <Head />
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="space-y-4 rounded-xl border bg-card p-5">
-            <div className="flex items-center justify-between">
-              <Block className="size-10 rounded-full" />
-              <Block className="h-5 w-16" />
+          <div key={i} className="space-y-5 rounded-xl border bg-card p-5">
+            <div className="space-y-2">
+              <Block className="h-5 w-3/4" />
+              <Block className="h-4 w-full" />
+              <Block className="h-4 w-2/3" />
             </div>
-            <Block className="h-5 w-3/4" />
-            <Block className="h-4 w-full" />
-            <Block className="h-1.5 w-full" />
+            <div className="space-y-2">
+              <Block className="h-1.5 w-full" />
+              <Block className="h-3 w-24" />
+            </div>
           </div>
         ))}
       </div>
@@ -33,18 +60,20 @@ function CoursesSkeleton() {
 function CourseDetailSkeleton() {
   return (
     <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <Block className="mb-6 h-4 w-32" />
-      <div className="flex items-start justify-between gap-4">
+      <Block className="mb-5 h-4 w-32" />
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-6 border-b pb-6">
         <div className="space-y-2">
-          <Block className="h-8 w-64" />
+          <Block className="h-7 w-64" />
           <Block className="h-4 w-80" />
         </div>
-        <Block className="h-10 w-20" />
+        <div className="flex items-end gap-8">
+          <Block className="h-9 w-20" />
+          <Block className="h-1.5 w-56" />
+        </div>
       </div>
-      <Block className="mt-4 mb-8 h-1.5 max-w-[420px]" />
       <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Block key={i} className="h-24 w-full" />
+          <Block key={i} className="h-26 w-full" />
         ))}
       </div>
     </main>
@@ -73,22 +102,18 @@ function ChallengeSkeleton() {
   );
 }
 
-function LeaderboardSkeleton() {
+// Slides: the stage is the page, so reserving its aspect ratio is what keeps
+// the deck from jumping once the lesson arrives.
+function SlidesSkeleton() {
   return (
-    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <div className="mb-7 space-y-2">
-        <Block className="h-8 w-56" />
-        <Block className="h-4 w-72" />
-      </div>
-      <div className="divide-y rounded-xl border bg-card">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-4 px-4 py-3.5">
-            <Block className="size-7 shrink-0 rounded-full" />
-            <Block className="size-8 shrink-0 rounded-full" />
-            <Block className="h-4 w-40" />
-            <Block className="ml-auto h-4 w-14" />
-          </div>
-        ))}
+    <main className="mx-auto max-w-[1100px] px-8 py-8 pb-16">
+      <Block className="mb-5 h-4 w-32" />
+      <Block className="mb-5 h-7 w-72" />
+      <Block className="aspect-[4/3] w-full sm:aspect-[16/9]" />
+      <div className="mt-3 flex items-center gap-3">
+        <Block className="size-8" />
+        <Block className="size-8" />
+        <Block className="h-1.5 flex-1" />
       </div>
     </main>
   );
@@ -96,36 +121,37 @@ function LeaderboardSkeleton() {
 
 function ProfileSkeleton() {
   return (
-    <main className="mx-auto max-w-[1400px] space-y-6 px-8 py-10 pb-20">
-      <Block className="h-8 w-40" />
-      <div className="flex items-center gap-4 rounded-xl border bg-card p-6">
+    <main className="mx-auto max-w-[900px] px-8 py-10 pb-20">
+      <Head wide="w-40" />
+      <div className="flex items-center gap-5 border-b pb-8">
         <Block className="size-16 rounded-full" />
         <div className="space-y-2">
           <Block className="h-5 w-40" />
           <Block className="h-4 w-56" />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-6 border-b py-8">
         {Array.from({ length: 3 }).map((_, i) => (
-          <Block key={i} className="h-24 w-full" />
+          <div key={i} className="space-y-2">
+            <Block className="h-7 w-16" />
+            <Block className="h-3 w-24" />
+          </div>
         ))}
       </div>
     </main>
   );
 }
 
-function AdminCoursesSkeleton() {
+function TableSkeleton() {
   return (
     <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <div className="mb-7 space-y-2">
-        <Block className="h-8 w-40" />
-        <Block className="h-4 w-56" />
-      </div>
-      <div className="space-y-px overflow-hidden rounded-xl border bg-card">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 px-4 py-3.5">
-            <Block className="size-10 rounded-full" />
+      <Head />
+      <div className="overflow-hidden rounded-xl border bg-card">
+        <Block className="h-10 w-full rounded-none" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 border-t px-4 py-3.5">
             <Block className="h-4 w-64" />
+            <Block className="ml-auto h-4 w-20" />
           </div>
         ))}
       </div>
@@ -136,7 +162,7 @@ function AdminCoursesSkeleton() {
 function FormSkeleton() {
   return (
     <main className="mx-auto max-w-[1400px] space-y-4 px-8 py-10 pb-20">
-      <Block className="h-8 w-56" />
+      <Block className="h-7 w-56" />
       <Block className="h-40 w-full" />
       <Block className="h-64 w-full" />
     </main>
@@ -146,7 +172,7 @@ function FormSkeleton() {
 function GenericSkeleton() {
   return (
     <main className="mx-auto max-w-[1400px] space-y-4 px-8 py-10 pb-20">
-      <Block className="h-8 w-56" />
+      <Block className="h-7 w-56" />
       <Block className="h-40 w-full" />
     </main>
   );
@@ -156,9 +182,12 @@ export function PageSkeleton({ pathname }: { pathname: string }) {
   if (pathname === "/app/courses") return <CoursesSkeleton />;
   if (/^\/app\/courses\/[^/]+\/challenges\//.test(pathname)) return <ChallengeSkeleton />;
   if (/^\/app\/courses\/[^/]+$/.test(pathname)) return <CourseDetailSkeleton />;
-  if (pathname === "/app/leaderboard") return <LeaderboardSkeleton />;
+  if (/\/slides$/.test(pathname) || /\/present$/.test(pathname)) return <SlidesSkeleton />;
+  if (/^\/app\/theory/.test(pathname)) return <RuledSkeleton narrow />;
+  if (pathname === "/app/leaderboard") return <RuledSkeleton narrow />;
   if (pathname === "/app/profile") return <ProfileSkeleton />;
-  if (pathname === "/admin/courses" || pathname === "/admin/students") return <AdminCoursesSkeleton />;
+  if (/^\/admin\/(courses|students|theory)$/.test(pathname)) return <TableSkeleton />;
+  if (/^\/admin\/theory\/[^/]+$/.test(pathname)) return <RuledSkeleton rows={5} narrow />;
   if (/^\/admin\/courses\/(new|[^/]+)$/.test(pathname)) return <FormSkeleton />;
   if (/^\/admin\/students\/[^/]+$/.test(pathname)) return <ProfileSkeleton />;
   return <GenericSkeleton />;

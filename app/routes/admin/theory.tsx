@@ -4,6 +4,7 @@ import type { Route } from "./+types/theory";
 import { api } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
 import { type ApiCourse } from "~/lib/mappers";
+import { PageHeader, PublishChip } from "~/components/bits";
 import { Button } from "~/components/ui/button";
 import {
   Table,
@@ -13,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { cn, timeAgo } from "~/lib/utils";
+import { timeAgo } from "~/lib/utils";
 
 export function meta() {
   return [{ title: "Teórico · Programación Avanzada" }];
@@ -30,10 +31,7 @@ export default function AdminTheory({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <div className="mb-7 space-y-1">
-        <h1 className="text-[28px] font-extrabold tracking-tight">Teórico</h1>
-        <p className="text-sm text-muted-foreground">Material teórico por curso</p>
-      </div>
+      <PageHeader title="Teórico" lead="Lecciones y diapositivas de cada curso" />
 
       <div className="overflow-hidden rounded-xl border bg-card">
         <Table>
@@ -53,21 +51,12 @@ export default function AdminTheory({ loaderData }: Route.ComponentProps) {
                   <p className="font-semibold">{c.title}</p>
                 </TableCell>
                 <TableCell>
-                  <span
-                    className={cn(
-                      "rounded-md px-2 py-0.5 text-[11px] font-medium",
-                      c.published
-                        ? "bg-success-soft text-success-soft-foreground"
-                        : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {c.published ? "Habilitado" : "Bloqueado"}
-                  </span>
+                  <PublishChip published={c.published} />
                 </TableCell>
-                <TableCell className="font-mono text-sm">{c.lessons_count ?? 0}</TableCell>
+                <TableCell className="num text-sm">{c.lessons_count ?? 0}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{timeAgo(c.updated_at)}</TableCell>
                 <TableCell>
-                  <Button asChild variant="ghost" size="icon" aria-label={`Gestionar teórico de ${c.title}`}>
+                  <Button asChild variant="ghost" size="icon" aria-label={`Gestionar lecciones de ${c.title}`}>
                     <Link prefetch="intent" to={`/admin/theory/${c.id}`}>
                       <Pencil />
                     </Link>

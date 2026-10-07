@@ -4,6 +4,7 @@ import type { Route } from "./+types/courses";
 import { api } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
 import { type ApiCourse } from "~/lib/mappers";
+import { PageHeader, PublishChip } from "~/components/bits";
 import { Button } from "~/components/ui/button";
 import {
   Table,
@@ -13,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { cn, timeAgo } from "~/lib/utils";
+import { timeAgo } from "~/lib/utils";
 
 export function meta() {
   return [{ title: "Mis cursos · Programación Avanzada" }];
@@ -33,20 +34,17 @@ export default function AdminCourses({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-[28px] font-extrabold tracking-tight">Mis cursos</h1>
-          <p className="text-sm text-muted-foreground">
-            {courses.length} {courses.length === 1 ? "curso" : "cursos"} · {studentCount} estudiantes inscriptos
-          </p>
-        </div>
+      <PageHeader
+        title="Mis cursos"
+        lead={`${courses.length} ${courses.length === 1 ? "curso" : "cursos"} para ${studentCount} estudiantes inscriptos`}
+      >
         <Button asChild>
           <Link prefetch="intent" to="/admin/courses/new">
             <Plus />
             Nuevo curso
           </Link>
         </Button>
-      </div>
+      </PageHeader>
 
       <div className="overflow-hidden rounded-xl border bg-card">
         <Table>
@@ -70,19 +68,10 @@ export default function AdminCourses({ loaderData }: Route.ComponentProps) {
                   </p>
                 </TableCell>
                 <TableCell>
-                  <span
-                    className={cn(
-                      "rounded-md px-2 py-0.5 text-[11px] font-medium",
-                      c.published
-                        ? "bg-success-soft text-success-soft-foreground"
-                        : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {c.published ? "Habilitado" : "Bloqueado"}
-                  </span>
+                  <PublishChip published={c.published} />
                 </TableCell>
-                <TableCell className="font-mono text-sm">{c.challenges_count ?? 0}</TableCell>
-                <TableCell className="font-mono text-sm">{c.lessons_count ?? 0}</TableCell>
+                <TableCell className="num text-sm">{c.challenges_count ?? 0}</TableCell>
+                <TableCell className="num text-sm">{c.lessons_count ?? 0}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{timeAgo(c.updated_at)}</TableCell>
                 <TableCell>
                   <Button asChild variant="ghost" size="icon" aria-label={`Editar ${c.title}`}>

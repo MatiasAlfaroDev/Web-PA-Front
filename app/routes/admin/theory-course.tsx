@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Play, Plus, Trash2 } from "lucide-react";
 import { Link, useFetcher } from "react-router";
 import type { Route } from "./+types/theory-course";
 import { api, apiResult } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
 import type { ApiCourse, ApiLesson } from "~/lib/mappers";
+import { splitSlides } from "~/lib/slides";
+import { BackLink, EmptyState, PageHeader } from "~/components/bits";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -107,62 +108,77 @@ export default function AdminTheoryCourse({ loaderData }: Route.ComponentProps) 
   }
 
   return (
-    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <Link prefetch="intent"
-        to="/admin/theory"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+    <main className="mx-auto max-w-[1000px] px-8 py-10 pb-20">
+      <BackLink to="/admin/theory">Teórico</BackLink>
+      <PageHeader
+        title={course.title}
+        lead="Arrastrá para reordenar. Cada lección se presenta como diapositivas."
       >
-        <ArrowLeft className="size-4" />
-        Teórico
-      </Link>
+        <Button variant="outline" onClick={() => setEditing(null)}>
+          <Plus />
+          Agregar lección
+        </Button>
+      </PageHeader>
 
-      <h1 className="mb-6 text-[28px] font-extrabold tracking-tight">{course.title}</h1>
-
-      <Card className="border p-6">
-        <CardHeader className="flex-row items-center justify-between px-0">
-          <CardTitle className="text-lg font-bold">Lecciones</CardTitle>
-          <Button variant="outline" onClick={() => setEditing(null)}>
+      {lessonOrder.length === 0 ? (
+        <EmptyState
+          title="Todavía no hay lecciones"
+          hint="Agregá la primera para armar el material teórico de este curso."
+        >
+          <Button onClick={() => setEditing(null)}>
             <Plus />
             Agregar lección
           </Button>
-        </CardHeader>
-        <CardContent className="px-0">
-          {lessonOrder.length === 0 ? (
-            <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-              Todavía no hay lecciones. Agregá la primera para armar el material teórico.
-            </p>
-          ) : (
-            <ul className="divide-y rounded-xl border">
-              {lessonOrder.map((l, i) => (
-                <li
-                  key={l.id}
-                  draggable
-                  onDragStart={() => (dragIndex.current = i)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => drop(i)}
-                  className="flex items-center gap-3 bg-card px-3 py-3 first:rounded-t-xl last:rounded-b-xl"
+        </EmptyState>
+      ) : (
+        <ul className="divide-y border-y">
+          {lessonOrder.map((l, i) => (
+            <li
+              key={l.id}
+              draggable
+              onDragStart={() => (dragIndex.current = i)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => drop(i)}
+              className="flex items-center gap-3 py-2.5"
+            >
+              <GripVertical className="size-4 shrink-0 cursor-grab text-muted-foreground" />
+              <span className="num w-6 shrink-0 text-xs text-muted-foreground">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="min-w-0 flex-1 truncate font-medium">{l.title}</span>
+              <Button asChild variant="secondary" size="sm">
+                <Link
+                  prefetch="intent"
+                  to={`/admin/theory/${course.id}/lessons/${l.id}/present`}
                 >
-                  <GripVertical className="size-4 shrink-0 cursor-grab text-muted-foreground" />
-                  <span className="w-6 shrink-0 font-mono text-sm text-muted-foreground">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="flex-1 font-medium">{l.title}</span>
-                  <Button variant="ghost" size="icon" aria-label="Editar lección" onClick={() => setEditing(l)}>
-                    <Pencil />
-                  </Button>
-                  <remove.Form method="post">
-                    <input type="hidden" name="intent" value="delete-lesson" />
-                    <input type="hidden" name="lesson_id" value={l.id} />
-                    <Button type="submit" variant="destructive" size="icon" aria-label="Eliminar lección">
-                      <Trash2 />
-                    </Button>
-                  </remove.Form>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+                  <Play className="fill-current" />
+                  Presentar
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Editar ${l.title}`}
+                onClick={() => setEditing(l)}
+              >
+                <Pencil />
+              </Button>
+              <remove.Form method="post">
+                <input type="hidden" name="intent" value="delete-lesson" />
+                <input type="hidden" name="lesson_id" value={l.id} />
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  size="icon"
+                  aria-label={`Eliminar ${l.title}`}
+                >
+                  <Trash2 />
+                </Button>
+              </remove.Form>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <LessonDialog
         editing={editing}
@@ -223,12 +239,15 @@ function LessonDialog({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="l-title">Título</Label>
-                <Input id="l-title" name="title" defaultValue={full?.title ?? editing?.title ?? ""} placeholder="ej. Herencia y polimorfismo" required />
+                <Input
+                  id="l-title"
+                  name="title"
+                  defaultValue={full?.title ?? editing?.title ?? ""}
+                  placeholder="ej. Herencia y polimorfismo"
+                  required
+                />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="l-content">Contenido (Markdown)</Label>
-                <Textarea id="l-content" name="content" rows={8} defaultValue={full?.content ?? ""} placeholder="# Título&#10;&#10;Explicación del tema..." required />
-              </div>
+              <LessonContentField defaultValue={full?.content ?? ""} />
               <div className="flex flex-wrap items-end gap-4">
                 <label className="flex items-center gap-2 pb-2 text-sm">
                   <input type="checkbox" name="published" defaultChecked={full?.published ?? true} />
@@ -236,11 +255,21 @@ function LessonDialog({
                 </label>
                 <div className="space-y-2">
                   <Label htmlFor="l-from">Disponible desde</Label>
-                  <Input id="l-from" name="available_from" type="datetime-local" defaultValue={toDatetimeLocal(full?.available_from)} />
+                  <Input
+                    id="l-from"
+                    name="available_from"
+                    type="datetime-local"
+                    defaultValue={toDatetimeLocal(full?.available_from)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="l-until">Disponible hasta</Label>
-                  <Input id="l-until" name="available_until" type="datetime-local" defaultValue={toDatetimeLocal(full?.available_until)} />
+                  <Input
+                    id="l-until"
+                    name="available_until"
+                    type="datetime-local"
+                    defaultValue={toDatetimeLocal(full?.available_until)}
+                  />
                 </div>
               </div>
               {save.data?.error && <p className="text-sm text-destructive">{save.data.error}</p>}
@@ -258,5 +287,36 @@ function LessonDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+// The slide count is the one piece of feedback that makes `---` discoverable:
+// the teacher types a separator and watches the count go up as they write.
+function LessonContentField({ defaultValue }: { defaultValue: string }) {
+  const [content, setContent] = useState(defaultValue);
+  const count = splitSlides(content).length;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-end justify-between gap-4">
+        <Label htmlFor="l-content">Contenido (Markdown)</Label>
+        <span className="num text-xs text-muted-foreground">
+          {count} {count === 1 ? "diapositiva" : "diapositivas"}
+        </span>
+      </div>
+      <Textarea
+        id="l-content"
+        name="content"
+        rows={10}
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder={"# Herencia\n\nUna clase hereda de otra...\n\n---\n\n# Polimorfismo"}
+        required
+      />
+      <p className="text-xs text-muted-foreground">
+        Una línea con <code className="rounded bg-muted px-1 py-0.5 font-mono">---</code> corta la
+        lección en diapositivas.
+      </p>
+    </div>
   );
 }

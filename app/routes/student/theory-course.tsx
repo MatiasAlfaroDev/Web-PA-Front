@@ -1,9 +1,11 @@
-import { ArrowLeft, FileText } from "lucide-react";
+import { Presentation } from "lucide-react";
 import { Link } from "react-router";
 import type { Route } from "./+types/theory-course";
 import { api } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
-import { mapCourseDetail, type ApiCourse, type Lesson } from "~/lib/mappers";
+import { mapCourseDetail, type ApiCourse } from "~/lib/mappers";
+import { BackLink, EmptyState, PageHeader } from "~/components/bits";
+import { Button } from "~/components/ui/button";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const token = await getTokenOrRedirect(request);
@@ -15,42 +17,46 @@ export function meta() {
   return [{ title: "Teórico · Programación Avanzada" }];
 }
 
-function LessonRow({ l, courseId }: { l: Lesson; courseId: string }) {
-  return (
-    <Link prefetch="intent"
-      to={`/app/theory/${courseId}/lessons/${l.id}`}
-      className="flex items-center gap-3 rounded-xl border-[1.5px] bg-card p-4 transition-colors hover:bg-muted/40"
-    >
-      <FileText className="size-4 shrink-0 text-muted-foreground" />
-      <span className="font-semibold">{l.title}</span>
-    </Link>
-  );
-}
-
 export default function TheoryCourse({ loaderData }: Route.ComponentProps) {
   const { course } = loaderData;
 
   return (
-    <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <Link prefetch="intent"
-        to="/app/theory"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Teórico
-      </Link>
+    <main className="mx-auto max-w-[900px] px-8 py-10 pb-20">
+      <BackLink to="/app/theory">Teórico</BackLink>
+      <PageHeader
+        title={course.title}
+        lead={`${course.lessons.length} ${course.lessons.length === 1 ? "tema" : "temas"} para leer o seguir en diapositivas`}
+      />
 
-      <h1 className="mb-6 text-[28px] font-extrabold tracking-tight">{course.title}</h1>
-
-      <div className="space-y-3">
-        {course.lessons.length === 0 ? (
-          <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-            Todavía no hay materiales teóricos para este curso.
-          </p>
-        ) : (
-          course.lessons.map((l) => <LessonRow key={l.id} l={l} courseId={course.id} />)
-        )}
-      </div>
+      {course.lessons.length === 0 ? (
+        <EmptyState
+          title="Todavía no hay material teórico"
+          hint="Cuando el profesor publique los temas de este curso, los vas a ver acá."
+        />
+      ) : (
+        <ol className="divide-y border-y">
+          {course.lessons.map((l, i) => (
+            <li key={l.id} className="group flex items-center gap-4">
+              <Link
+                prefetch="intent"
+                to={`/app/theory/${course.id}/lessons/${l.id}`}
+                className="flex min-w-0 flex-1 items-baseline gap-4 py-4 transition-colors group-hover:text-success-ink"
+              >
+                <span className="num w-6 shrink-0 text-xs text-muted-foreground">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="truncate font-medium">{l.title}</span>
+              </Link>
+              <Button asChild variant="ghost" size="sm" className="shrink-0">
+                <Link prefetch="intent" to={`/app/theory/${course.id}/lessons/${l.id}/slides`}>
+                  <Presentation />
+                  Diapositivas
+                </Link>
+              </Button>
+            </li>
+          ))}
+        </ol>
+      )}
     </main>
   );
 }

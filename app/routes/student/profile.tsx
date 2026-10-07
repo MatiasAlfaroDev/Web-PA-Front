@@ -5,11 +5,11 @@ import type { Route } from "./+types/profile";
 import { api, apiResult } from "~/lib/api";
 import { fullName, getTokenOrRedirect, initialsOf, type User } from "~/lib/auth";
 import { courseLockState, mapCourse, type ApiCourse } from "~/lib/mappers";
+import { Figure, PageHeader, ProgressTicks } from "~/components/bits";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Progress } from "~/components/ui/progress";
 import { Textarea } from "~/components/ui/textarea";
 
 export function meta() {
@@ -75,9 +75,9 @@ function AvatarUpload({ user }: { user: User }) {
       >
         <Avatar className="size-16">
           {user.avatar_url && <AvatarImage src={user.avatar_url} alt="" />}
-          <AvatarFallback className="font-mono text-lg">{initialsOf(user)}</AvatarFallback>
+          <AvatarFallback className="num text-lg">{initialsOf(user)}</AvatarFallback>
         </Avatar>
-        <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100">
+        <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/55 text-white opacity-0 transition-opacity group-hover:opacity-100">
           <Camera className="size-5" />
         </span>
       </button>
@@ -89,22 +89,18 @@ export default function Profile({ loaderData, actionData }: Route.ComponentProps
   const { user, courses } = loaderData;
   const [editing, setEditing] = useState(false);
 
-  const stats = [
-    { label: "Puntos", value: user.points ?? 0 },
-    { label: "Racha diaria", value: user.streak ?? 0 },
-    { label: "Desafíos resueltos", value: user.solved ?? 0 },
-  ];
-
   return (
-    <main className="mx-auto max-w-[1400px] space-y-6 px-8 py-10 pb-20">
-      <h1 className="text-[28px] font-extrabold tracking-tight">Tu perfil</h1>
+    <main className="mx-auto max-w-[900px] px-8 py-10 pb-20">
+      <PageHeader title="Tu perfil">
+        {!editing && (
+          <Button variant="outline" onClick={() => setEditing(true)}>
+            Editar perfil
+          </Button>
+        )}
+      </PageHeader>
 
       {editing ? (
-        <Form
-          method="post"
-          onSubmit={() => setEditing(false)}
-          className="space-y-4 rounded-xl border bg-card p-6"
-        >
+        <Form method="post" onSubmit={() => setEditing(false)} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="first_name">Nombre</Label>
@@ -117,7 +113,13 @@ export default function Profile({ loaderData, actionData }: Route.ComponentProps
           </div>
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>
-            <Textarea id="bio" name="bio" rows={3} defaultValue={user.bio ?? ""} placeholder="Una línea sobre vos" />
+            <Textarea
+              id="bio"
+              name="bio"
+              rows={3}
+              defaultValue={user.bio ?? ""}
+              placeholder="Una línea sobre vos"
+            />
           </div>
           <div className="flex gap-2">
             <Button type="submit">Guardar cambios</Button>
@@ -127,59 +129,49 @@ export default function Profile({ loaderData, actionData }: Route.ComponentProps
           </div>
         </Form>
       ) : (
-        <div className="flex items-center gap-4 rounded-xl border bg-card p-6">
+        <div className="flex items-center gap-5 border-b pb-8">
           <AvatarUpload user={user} />
-          <div className="space-y-0.5">
-            <p className="text-lg font-bold">{fullName(user)}</p>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
+          <div className="min-w-0 space-y-0.5">
+            <p className="section-title text-[19px]">{fullName(user)}</p>
+            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
             {user.bio && <p className="pt-1 text-sm text-muted-foreground">{user.bio}</p>}
           </div>
-          <Button variant="outline" className="ml-auto" onClick={() => setEditing(true)}>
-            Editar perfil
-          </Button>
         </div>
       )}
 
       {actionData && "ok" in actionData && (
-        <p className="text-sm text-success">Perfil guardado.</p>
+        <p className="pt-4 text-sm text-success-ink">Perfil guardado.</p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border bg-card p-5">
-            <p className="font-mono text-3xl font-bold text-success">{s.value}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{s.label}</p>
-          </div>
-        ))}
+      {/* Three figures side by side on a rule, not three identical cards. */}
+      <div className="grid grid-cols-3 gap-6 border-b py-8">
+        <Figure value={user.points ?? 0} label="Puntos" tone="accent" />
+        <Figure value={user.streak ?? 0} label="Racha diaria" />
+        <Figure value={user.solved ?? 0} label="Desafíos resueltos" />
       </div>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-bold">Tus cursos</h2>
-        <div className="divide-y rounded-xl border bg-card">
-          {courses.map((c) => {
-            const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
-            return (
-              <Link prefetch="intent"
-                key={c.id}
+      <section className="py-8">
+        <h2 className="section-title mb-3">Tus cursos</h2>
+        <ul className="divide-y border-t">
+          {courses.map((c) => (
+            <li key={c.id}>
+              <Link
+                prefetch="intent"
                 to={`/app/courses/${c.id}`}
-                className="flex items-center gap-4 p-4 hover:bg-muted/40"
+                className="group flex items-center gap-5 py-3.5"
               >
-                <span className="w-40 shrink-0 font-semibold">{c.title}</span>
-                <Progress value={pct} className="h-1.5 flex-1" />
-                <span className="w-14 shrink-0 text-right font-mono text-xs text-muted-foreground">
+                <span className="min-w-0 flex-1 truncate font-medium transition-colors group-hover:text-success-ink">
+                  {c.title}
+                </span>
+                <ProgressTicks done={c.done} total={c.total} className="w-32 shrink-0" />
+                <span className="num w-12 shrink-0 text-right text-xs text-muted-foreground">
                   {c.done}/{c.total}
                 </span>
               </Link>
-            );
-          })}
-        </div>
+            </li>
+          ))}
+        </ul>
       </section>
-
-      <Form method="post" action="/logout">
-        <Button type="submit" variant="outline">
-          Cerrar sesión
-        </Button>
-      </Form>
     </main>
   );
 }

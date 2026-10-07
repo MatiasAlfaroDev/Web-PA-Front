@@ -1,10 +1,10 @@
-import { ArrowLeft, Check, Lock, Play } from "lucide-react";
+import { Check, Lock, Play } from "lucide-react";
 import { Link } from "react-router";
 import type { Route } from "./+types/course-detail";
 import { api } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
 import { mapCourseDetail, type ApiCourse, type Challenge } from "~/lib/mappers";
-import { Progress } from "~/components/ui/progress";
+import { BackLink, EmptyState, Figure, ProgressTicks } from "~/components/bits";
 import { cn } from "~/lib/utils";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -22,36 +22,40 @@ function DayTile({ c, courseId }: { c: Challenge; courseId: string }) {
 
   if (c.status === "locked") {
     return (
-      <div className="flex min-h-24 cursor-not-allowed flex-col gap-2 rounded-xl border-[1.5px] bg-muted/40 p-4 opacity-75">
-        <div className="flex items-center justify-between font-mono text-sm font-semibold text-muted-foreground">
+      <div
+        className="flex min-h-26 cursor-not-allowed flex-col gap-2 rounded-xl border bg-muted/40 p-4"
+        aria-label={`Día ${c.day}, bloqueado`}
+      >
+        <div className="num flex items-center justify-between text-sm font-semibold text-muted-foreground">
           {day}
           <Lock className="size-4" />
         </div>
-        <p className="font-semibold text-muted-foreground">???</p>
+        <p className="font-medium text-muted-foreground">Por abrir</p>
       </div>
     );
   }
 
   const done = c.status === "done";
   return (
-    <Link prefetch="intent"
+    <Link
+      prefetch="intent"
       to={`/app/courses/${courseId}/challenges/${c.id}`}
       className={cn(
-        "flex min-h-24 flex-col gap-2 rounded-xl border-[1.5px] p-4 transition-colors",
+        "flex min-h-26 flex-col gap-2 rounded-xl border p-4 transition-colors",
         done
-          ? "border-success bg-success text-white"
-          : "border-success bg-card animate-unlock-pulse hover:bg-muted/40"
+          ? "border-success bg-success text-white hover:bg-success/90"
+          : "animate-unlock-pulse border-brand bg-card hover:bg-muted/40",
       )}
     >
-      <div className="flex items-center justify-between font-mono text-sm font-semibold">
+      <div className="num flex items-center justify-between text-sm font-semibold">
         {day}
-        {done ? <Check className="size-4" /> : <Play className="size-4 fill-current text-success" />}
+        {done ? <Check className="size-4" /> : <Play className="size-4 fill-current text-success-ink" />}
       </div>
-      <p className={cn("font-semibold", !done && "text-foreground")}>{c.title}</p>
+      <p className="font-semibold">{c.title}</p>
       <span
         className={cn(
-          "mt-auto w-fit rounded-md px-1.5 py-0.5 font-mono text-[11px] font-medium",
-          done ? "bg-white/20" : "bg-success-soft text-success-soft-foreground"
+          "num mt-auto w-fit rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+          done ? "bg-white/20" : "bg-success-soft text-success-soft-foreground",
         )}
       >
         +{c.points} pts
@@ -62,41 +66,42 @@ function DayTile({ c, courseId }: { c: Challenge; courseId: string }) {
 
 export default function CourseDetail({ loaderData }: Route.ComponentProps) {
   const { course } = loaderData;
-  const pct = Math.round((course.done / course.total) * 100);
 
   return (
     <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <Link prefetch="intent"
-        to="/app/courses"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Todos los cursos
-      </Link>
+      <BackLink to="/app/courses">Todos los cursos</BackLink>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1.5">
-          <h1 className="text-[28px] font-extrabold tracking-tight">{course.title}</h1>
+      {/* The course head pairs its one figure with the per-day rail, so the
+          student sees both how far along they are and what opens next. */}
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-4 border-b pb-6">
+        <div className="max-w-[52ch] space-y-1">
+          <h1 className="page-title">{course.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {course.total} desafíos diarios · {course.unlockCopy}
+            {course.total} desafíos diarios, {course.unlockCopy}
           </p>
         </div>
-        <div className="text-right">
-          <p className="font-mono text-[22px] font-bold text-success">
-            {course.done}
-            <span className="text-muted-foreground">/{course.total}</span>
-          </p>
-          <p className="text-xs text-muted-foreground">desafíos completados</p>
+        <div className="flex items-end gap-8">
+          <Figure value={`${course.done}/${course.total}`} label="resueltos" tone="accent" />
+          <ProgressTicks
+            done={course.done}
+            total={course.total}
+            className="w-[min(320px,40vw)] pb-2"
+          />
         </div>
-      </div>
+      </header>
 
-      <Progress value={pct} className="mt-4 mb-8 h-1.5 max-w-[420px]" />
-
-      <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
-        {course.challenges.map((c) => (
-          <DayTile key={c.id} c={c} courseId={course.id} />
-        ))}
-      </div>
+      {course.challenges.length === 0 ? (
+        <EmptyState
+          title="Este curso todavía no tiene desafíos"
+          hint="El profesor los publica día por día."
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
+          {course.challenges.map((c) => (
+            <DayTile key={c.id} c={c} courseId={course.id} />
+          ))}
+        </div>
+      )}
     </main>
   );
 }

@@ -49,7 +49,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
     <AuthShell>
       <Form method="post" className="w-full max-w-[380px] space-y-7">
         <div className="space-y-1.5">
-          <h2 className="text-2xl font-bold tracking-tight">Iniciar sesión</h2>
+          <h2 className="page-title">Iniciar sesión</h2>
           <p className="text-sm text-muted-foreground">Usá tu email o CI para continuar</p>
         </div>
 
@@ -102,7 +102,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
 
           <p className="text-center text-sm text-muted-foreground">
             ¿Es tu primera vez en la plataforma?{" "}
-            <Link to="/register" className="font-medium text-foreground hover:text-success">
+            <Link to="/register" className="font-medium text-foreground hover:text-success-ink">
               Registrate
             </Link>
           </p>

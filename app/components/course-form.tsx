@@ -1,3 +1,4 @@
+import { PageHeader } from "~/components/bits";
 import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -57,7 +58,8 @@ export function CourseForm({
   );
 }
 
-// Header shared by create/edit: title + subtitle + primary action.
+// Header shared by create/edit. Same shape as every other page head in the
+// app, with the primary action on the right instead of under the subtitle.
 export function AdminFormHeader({
   title,
   subtitle,
@@ -68,12 +70,8 @@ export function AdminFormHeader({
   action: React.ReactNode;
 }) {
   return (
-    <div className="mb-8 space-y-3">
-      <div className="space-y-1">
-        <h1 className="text-[28px] font-extrabold tracking-tight">{title}</h1>
-        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
-      </div>
+    <PageHeader title={title} lead={subtitle}>
       {action}
-    </div>
+    </PageHeader>
   );
 }

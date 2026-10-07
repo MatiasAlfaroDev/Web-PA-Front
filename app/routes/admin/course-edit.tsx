@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, GripVertical, Info, Pencil, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { Form, Link, redirect, useFetcher } from "react-router";
 import type { Route } from "./+types/course-edit";
 import { api, apiResult } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
 import type { ApiChallenge, ApiCourse } from "~/lib/mappers";
+import { BackLink } from "~/components/bits";
 import { AdminFormHeader, CourseForm } from "~/components/course-form";
 import { useActionToast } from "~/hooks/use-action-toast";
 import { Button } from "~/components/ui/button";
@@ -143,13 +144,7 @@ export default function CourseEdit({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <Link prefetch="intent"
-        to="/admin/courses"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Mis cursos
-      </Link>
+      <BackLink to="/admin/courses">Mis cursos</BackLink>
 
       <Form method="post">
         <input type="hidden" name="intent" value="save-course" />
@@ -165,7 +160,12 @@ export default function CourseEdit({ loaderData }: Route.ComponentProps) {
 
       <Card className="mt-6 border p-6">
         <CardHeader className="flex-row items-center justify-between px-0">
-          <CardTitle className="text-lg font-bold">Desafíos · se desbloquean en orden, uno por día</CardTitle>
+          <div className="space-y-0.5">
+            <CardTitle className="section-title">Desafíos</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Se desbloquean en orden, uno por día.
+            </p>
+          </div>
           <Button variant="outline" onClick={() => setEditing(null)}>
             <Plus />
             Agregar desafío
@@ -188,7 +188,7 @@ export default function CourseEdit({ loaderData }: Route.ComponentProps) {
                   className="flex items-center gap-3 bg-card px-3 py-3 first:rounded-t-xl last:rounded-b-xl"
                 >
                   <GripVertical className="size-4 shrink-0 cursor-grab text-muted-foreground" />
-                  <span className="w-6 shrink-0 font-mono text-sm text-muted-foreground">
+                  <span className="num w-6 shrink-0 text-sm text-muted-foreground">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="flex-1 font-medium">{c.title}</span>
@@ -350,7 +350,7 @@ function ChallengeDialog({
                 </label>
               </div>
               <p className="text-xs text-muted-foreground">
-                Los puntos bajan 10 por cada día que pasa sin resolverse desde que se publica, sin bajar de "Puntos mínimos" — dejalo vacío para que no baje nunca.
+                Los puntos bajan 10 por cada día que pasa sin resolverse desde que se publica, sin bajar de "Puntos mínimos". Dejalo vacío para que no baje nunca.
               </p>
 
               <Tabs defaultValue="description">
@@ -377,7 +377,7 @@ function ChallengeDialog({
 
               <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <Info className="mt-0.5 size-4 shrink-0" />
-                Los casos de prueba que corrigen este desafío se gestionan por la API — este formulario cubre el enunciado y el código inicial.
+                Los casos de prueba que corrigen este desafío se gestionan por la API. Este formulario cubre el enunciado y el código inicial.
               </p>
               {save.data?.error && <p className="text-sm text-destructive">{save.data.error}</p>}
             </div>

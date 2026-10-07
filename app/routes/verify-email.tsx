@@ -39,7 +39,7 @@ export default function VerifyEmail({ actionData }: Route.ComponentProps) {
     <AuthShell>
       <Form method="post" className="w-full max-w-[360px] space-y-5">
         <div className="space-y-1.5">
-          <h2 className="text-2xl font-bold tracking-tight">Revisá tu email</h2>
+          <h2 className="page-title">Revisá tu email</h2>
           <p className="text-sm text-muted-foreground">
             Enviamos un código de 6 dígitos{email ? ` a ${email}` : ""}. Ingresalo abajo.
           </p>

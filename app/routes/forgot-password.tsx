@@ -25,7 +25,7 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
     <AuthShell>
       <div className="w-full max-w-[360px] space-y-5">
         <div className="space-y-1.5">
-          <h2 className="text-2xl font-bold tracking-tight">Restablecé tu contraseña</h2>
+          <h2 className="page-title">Restablecé tu contraseña</h2>
           <p className="text-sm text-muted-foreground">
             Ingresá tu email y te enviaremos un enlace para crear una nueva.
           </p>

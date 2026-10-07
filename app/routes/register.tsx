@@ -73,7 +73,7 @@ export default function Register({ actionData }: Route.ComponentProps) {
     <AuthShell>
       <Form method="post" className="w-full max-w-[380px] space-y-7">
         <div className="space-y-1.5">
-          <h2 className="text-2xl font-bold tracking-tight">Creá tu cuenta</h2>
+          <h2 className="page-title">Creá tu cuenta</h2>
           <p className="text-sm text-muted-foreground">Te enviaremos un código por email para verificarla</p>
         </div>
 

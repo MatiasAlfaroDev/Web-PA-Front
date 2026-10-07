@@ -122,7 +122,7 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
       ? "Ejecutando pruebas…"
       : status === "error"
         ? submission.judge_output?.message ?? "Error de compilación o de ejecución"
-        : `${submission.passed_count}/${submission.total_count} pruebas superadas · +${submission.score} pts`;
+        : `${submission.passed_count}/${submission.total_count} pruebas superadas, +${submission.score} pts`;
 
   const submitError = submit.data && "error" in submit.data ? submit.data.error : undefined;
   const locked = challenge.status === "locked";
@@ -137,14 +137,15 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
           <ArrowLeft className="size-4" />
           {challenge.courseTitle}
         </Link>
-        <span className="text-sm font-bold">
-          Día {challenge.day} · {challenge.title}
+        <span className="flex items-baseline gap-2.5 text-sm">
+          <span className="num text-muted-foreground">Día {String(challenge.day).padStart(2, "0")}</span>
+          <span className="font-semibold">{challenge.title}</span>
         </span>
         <div className="ml-auto flex items-center gap-4">
-          <span className="rounded-md bg-success-soft px-2 py-0.5 font-mono text-xs font-medium text-success-soft-foreground">
+          <span className="num rounded-md bg-success-soft px-2 py-0.5 text-xs font-medium text-success-soft-foreground">
             +{challenge.points} pts
           </span>
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="num text-xs text-muted-foreground">
             {challenge.remaining} de {challenge.total} restantes
           </span>
         </div>
@@ -153,7 +154,7 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
       {locked && (
         <div className="flex items-center gap-2 border-b bg-muted/40 px-8 py-2 text-sm text-muted-foreground">
           <Lock className="size-4" />
-          Este desafío se desbloquea cuando completes el anterior — volvé mañana.
+          Este desafío se desbloquea cuando completes el anterior. Volvé mañana.
         </div>
       )}
 
@@ -185,7 +186,7 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col bg-[#1e1e1e]">
             <div className="flex shrink-0 items-center bg-[#181818] px-4">
-              <span className="border-b-2 border-success px-2 py-2.5 font-mono text-xs text-[#d4d4d4]">
+              <span className="border-b-2 border-brand px-2 py-2.5 font-mono text-xs text-[#d4d4d4]">
                 {challenge.filename}
               </span>
             </div>
@@ -227,8 +228,8 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
           <div className="flex h-[38%] shrink-0 flex-col overflow-y-auto border-t bg-background px-6 py-4">
             <p
               className={cn(
-                "mb-3 font-mono text-sm font-medium",
-                status === "passed" && "text-success",
+                "num mb-3 text-sm font-medium",
+                status === "passed" && "text-success-ink",
                 status === "error" && "text-destructive"
               )}
             >
@@ -253,7 +254,7 @@ export default function Challenge({ loaderData }: Route.ComponentProps) {
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-background/90 backdrop-blur-md">
             <EyeOff className="size-6 text-muted-foreground" />
             <p className="text-sm font-medium text-muted-foreground">
-              El desafío se pausó — volvé a esta pestaña para continuar
+              El desafío se pausó. Volvé a esta pestaña para continuar
             </p>
           </div>
         )}
@@ -268,7 +269,7 @@ function ResultRow({ name, passed, pending }: { name: string; passed?: boolean; 
       {pending ? (
         <span className="size-2 rounded-full bg-border-strong" />
       ) : passed ? (
-        <Check className="size-4 text-success" />
+        <Check className="size-4 text-success-ink" />
       ) : (
         <X className="size-4 text-destructive" />
       )}

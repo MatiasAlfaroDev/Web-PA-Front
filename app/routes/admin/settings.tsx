@@ -4,6 +4,7 @@ import { api, apiResult } from "~/lib/api";
 import { getSiteLock, getTokenOrRedirect } from "~/lib/auth";
 import type { ApiCourse } from "~/lib/mappers";
 import { useActionToast } from "~/hooks/use-action-toast";
+import { PageHeader } from "~/components/bits";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -81,7 +82,7 @@ function SiteLockCard({ lockedUntil }: { lockedUntil: string | null }) {
   return (
     <Card className="border p-6">
       <CardHeader className="px-0">
-        <CardTitle className="text-lg font-bold">Bloqueo del sitio</CardTitle>
+        <CardTitle className="section-title">Bloqueo del sitio</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 px-0">
         <p className="text-sm text-muted-foreground">
@@ -91,7 +92,7 @@ function SiteLockCard({ lockedUntil }: { lockedUntil: string | null }) {
 
         {locked ? (
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-md bg-destructive/10 px-3 py-1.5 font-mono text-sm text-destructive">
+            <span className="num rounded-md bg-destructive/10 px-3 py-1.5 text-sm text-destructive">
               Bloqueado hasta{" "}
               {new Date(lockedUntil!).toLocaleTimeString("es-UY", { hour: "2-digit", minute: "2-digit" })}
             </span>
@@ -151,7 +152,7 @@ function CourseRow({ course }: { course: ApiCourse }) {
               checked={published}
               disabled={pending}
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
-              className="size-4 accent-success"
+              className="size-4 accent-brand"
             />
           </label>
         </fetcher.Form>
@@ -168,13 +169,13 @@ export default function AdminSettings({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="mx-auto max-w-[1400px] space-y-6 px-8 py-10 pb-20">
-      <h1 className="text-[28px] font-extrabold tracking-tight">Ajustes</h1>
+      <PageHeader title="Ajustes" className="mb-0" />
 
       <SiteLockCard lockedUntil={lockedUntil} />
 
       <Card className="border p-6">
         <CardHeader className="flex-row items-center justify-between px-0">
-          <CardTitle className="text-lg font-bold">Cursos</CardTitle>
+          <CardTitle className="section-title">Cursos</CardTitle>
           <div className="flex items-center gap-2">
             {bulkBusy && <span className="text-xs text-muted-foreground">Actualizando…</span>}
             <bulk.Form method="post">

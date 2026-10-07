@@ -4,7 +4,7 @@ import type { Route } from "./+types/students";
 import { api } from "~/lib/api";
 import { getTokenOrRedirect } from "~/lib/auth";
 import type { ApiStudentRow } from "~/lib/mappers";
-import { InitialsBadge } from "~/components/bits";
+import { InitialsBadge, PageHeader } from "~/components/bits";
 import {
   Table,
   TableBody,
@@ -29,12 +29,10 @@ export default function Students({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="mx-auto max-w-[1400px] px-8 py-10 pb-20">
-      <header className="mb-7">
-        <h1 className="text-[28px] font-extrabold tracking-tight">Estudiantes</h1>
-        <p className="text-sm text-muted-foreground">
-          {students.length} {students.length === 1 ? "estudiante" : "estudiantes"} · entregas y progreso por desafío
-        </p>
-      </header>
+      <PageHeader
+        title="Estudiantes"
+        lead={`${students.length} ${students.length === 1 ? "estudiante" : "estudiantes"}, con sus entregas y su progreso por desafío`}
+      />
 
       <div className="overflow-hidden rounded-xl border bg-card">
         <Table>
@@ -61,19 +59,19 @@ export default function Students({ loaderData }: Route.ComponentProps) {
                     </span>
                   </Link>
                 </TableCell>
-                <TableCell className="font-mono text-sm">{s.ci ?? "—"}</TableCell>
+                <TableCell className="num text-sm">{s.ci ?? "sin CI"}</TableCell>
                 <TableCell>
                   <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     {s.email_verified_at ? (
-                      <ShieldCheck className="size-3.5 text-success" />
+                      <ShieldCheck className="size-3.5 text-success-ink" />
                     ) : (
                       <ShieldQuestion className="size-3.5" />
                     )}
                     {s.email}
                   </span>
                 </TableCell>
-                <TableCell className="font-mono text-sm font-semibold">{s.total_score}</TableCell>
-                <TableCell className="font-mono text-sm">{s.challenges_solved}</TableCell>
+                <TableCell className="num text-sm font-semibold">{s.total_score}</TableCell>
+                <TableCell className="num text-sm">{s.challenges_solved}</TableCell>
               </TableRow>
             ))}
           </TableBody>
