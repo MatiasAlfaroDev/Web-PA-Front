@@ -19,32 +19,25 @@ Lo que no entra: multi-loader, portar a Bedrock, servidor público, mods de 200 
 
 ## El calendario
 
-Ocho semanas, del 7 de octubre al 27 de noviembre. Ajustar por feriados.
+Cinco semanas, del lunes 5 de octubre al viernes 6 de noviembre. Cada semana va de lunes a viernes, y el viernes se muestra lo que haya. Ajustar por feriados.
 
-1. 7 al 11 de octubre: entorno andando, mod vacío cargando, repo creado.
-2. 12 al 18: ítem, bloque, receta, textura. Todos los archivos, entendidos.
-3. 19 al 25: idea cerrada y alcance escrito. Backlog en el repo.
-4. 26 de octubre al 1 de noviembre: la mecánica central funcionando, aunque esté fea.
+1. 5 al 9 de octubre: entorno andando, mod vacío cargando, repo creado.
+2. 12 al 16 de octubre: ítem, bloque, receta y textura. Idea cerrada y alcance escrito.
+3. 19 al 23 de octubre: la mecánica central funcionando, aunque esté fea.
+4. 26 al 30 de octubre: modelos y texturas propias, mensajes al jugador, balance. Congelamiento el viernes 30: después no entran funciones nuevas, sólo arreglos.
+5. 2 al 6 de noviembre: pruebas en instancia limpia, README, bitácora, presentación. Entrega el viernes 6.
 
----
-
-## El calendario, segunda mitad
-
-5. 2 al 8 de noviembre: modelos y texturas propias reemplazando los placeholders.
-6. 9 al 15: segunda mecánica, recetas, balance, mensajes al jugador.
-7. 16 al 22: congelamiento el viernes 20. Después de esa fecha no entran funciones nuevas, sólo arreglos.
-8. 23 al 27: pruebas en instancia limpia, README, bitácora, presentación. Entrega el viernes 27.
+Son cinco semanas y no diez: por eso el alcance se cierra en la segunda, y lo que no entra se corta temprano, no el último día.
 
 ---
 
 ## Hitos que se controlan en clase
 
 - Semana 1: `./gradlew runClient` abre el juego con el mod del equipo.
-- Semana 2: un ítem y un bloque propios, con textura y nombre en español.
-- Semana 3: documento de alcance de una carilla, en el repo.
-- Semana 4: demo de la mecánica central, en vivo, en una compu del equipo.
-- Semana 6: el mod se instala desde el `.jar` en una instancia limpia.
-- Semana 8: presentación y entrega.
+- Semana 2: un ítem y un bloque propios, con textura y nombre en español, y el alcance de una carilla en el repo.
+- Semana 3: demo de la mecánica central, en vivo, en una compu del equipo.
+- Semana 4: el mod se instala desde el `.jar` en una instancia limpia.
+- Semana 5: presentación y entrega.
 
 Un hito no cumplido no se arrastra en silencio: se avisa y se reordena el alcance.
 
@@ -106,7 +99,7 @@ Un mod que anda y que nadie del equipo puede explicar vale menos que uno más ch
 
 ## La entrega
 
-Viernes 27 de noviembre, en el repo del equipo:
+Viernes 6 de noviembre, en el repo del equipo:
 
 - El código, con `.gitignore` sano y sin `build/` ni `run/`.
 - El `.jar` del mod, o las instrucciones exactas para generarlo.
@@ -120,6 +113,6 @@ Viernes 27 de noviembre, en el repo del equipo:
 
 - Hoy queda el entorno andando y el mod vacío cargando.
 - Próxima clase: ítem, bloque y receta, con todos los archivos.
-- Semana del 19: cada equipo defiende su idea y cierra el alcance.
+- Semana del 12: cada equipo defiende su idea y cierra el alcance.
 
 Traigan el entorno funcionando. La clase que viene no se arma entornos.
