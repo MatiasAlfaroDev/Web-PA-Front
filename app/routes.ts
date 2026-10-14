@@ -11,6 +11,7 @@ export default [
 
   // Modo vitrina: el teórico de Minecraft, público y sin backend (ver home.tsx)
   route("teorico/:slug", "routes/teorico.tsx"),
+  route("equipos", "routes/equipos.tsx"),
 
   // Auth
   route("login", "routes/login.tsx"),
