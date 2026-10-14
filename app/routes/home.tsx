@@ -37,27 +37,61 @@ export default function Home(_: Route.ComponentProps) {
 
       <ol className="divide-y border-y">
         {lectures.map((l) => (
-          <li key={l.slug}>
-            <Link
-              to={`/teorico/${l.slug}`}
-              prefetch="intent"
-              className="group flex items-baseline gap-4 py-4"
-            >
-              <span className="num w-6 shrink-0 text-xs text-muted-foreground">{l.number}</span>
-              <span className="min-w-0 flex-1">
-                <span className="section-title block transition-colors group-hover:text-success-ink">
-                  {l.title}
-                </span>
-                <span className="mt-0.5 block text-[13.5px] text-muted-foreground">{l.lead}</span>
-              </span>
-              <span className="num shrink-0 text-xs text-muted-foreground">
-                {l.slideCount} diapositivas
-              </span>
-              <ChevronRight className="size-4 shrink-0 self-center text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </li>
+          <Entry
+            key={l.slug}
+            to={`/teorico/${l.slug}`}
+            number={l.number}
+            title={l.title}
+            lead={l.lead}
+            slideCount={l.slideCount}
+          />
         ))}
       </ol>
+
+      <h2 className="section-title mt-12 mb-3">Taller de LLM</h2>
+      <ol className="divide-y border-y">
+        {/* ponytail: mazo HTML autocontenido en public/, se sirve tal cual. */}
+        <Entry
+          to="/teorico/taller-llm-parte-2.html"
+          reloadDocument
+          number="02"
+          title="Taller LLM · Parte 2"
+          lead="Skills, hooks y plugins; agentes y orquestación; LLM locales y RAG."
+          slideCount={33}
+        />
+      </ol>
     </PublicShell>
+  );
+}
+
+function Entry(props: {
+  to: string;
+  reloadDocument?: boolean;
+  number: string;
+  title: string;
+  lead: string;
+  slideCount: number;
+}) {
+  return (
+    <li>
+      <Link
+        to={props.to}
+        reloadDocument={props.reloadDocument}
+        prefetch={props.reloadDocument ? "none" : "intent"}
+        className="group flex items-baseline gap-4 py-4"
+      >
+        <span className="num w-6 shrink-0 text-xs text-muted-foreground">{props.number}</span>
+        <span className="min-w-0 flex-1">
+          <span className="section-title block transition-colors group-hover:text-success-ink">
+            {props.title}
+          </span>
+          <span className="mt-0.5 block text-[13.5px] text-muted-foreground">{props.lead}</span>
+        </span>
+        <span className="num shrink-0 text-xs text-muted-foreground">
+          {props.slideCount} diapositivas
+        </span>
+        <ChevronRight className="size-4 shrink-0 self-center text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </Link>
+    </li>
   );
 }

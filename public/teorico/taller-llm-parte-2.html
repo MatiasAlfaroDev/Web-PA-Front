@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taller LLM · Parte 2</title>
+<meta name="description" content="Taller técnico de LLM para desarrollo de software, parte 2: skills, hooks y plugins; agentes y orquestación; LLM locales y RAG.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Lato:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3D3929; --muted:#6B6658; --faint:#B9B2A0;
+  --accent:#D97757; --accent-dk:#BD5D3A;
+  --bg:#F5F0E7; --paper:#FFFFFF; --beige:#EFE8DA; --line:#E4DDCC; --row:#FAF8F3;
+  --dark:#262624; --dark2:#2F2C29; --code-tx:#E8E3D6; --code-cm:#8F897A; --code-st:#E3BE96;
+  --serif:"Source Serif 4", Cambria, Georgia, serif;
+  --sans:Lato, Calibri, "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", "Courier New", monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#1b1a19;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden}
+a{color:inherit}
+
+/* ---------- stage (modo presentación) ---------- */
+#deck{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{width:1280px;height:720px;position:relative;transform-origin:center center;flex:none}
+.slide{position:absolute;inset:0;background:var(--bg);padding:46px 64px 0;display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex}
+.slide.dark{background:var(--dark);color:#F2EDE3}
+
+/* ---------- tipografía ---------- */
+.kicker{font:700 11px/1 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;color:var(--ink);letter-spacing:-.005em}
+.dark h1,.dark h2{color:#F7F3EA}
+h2{font-size:33px;line-height:1.12;margin-bottom:12px}
+h3{font-size:16px;line-height:1.25;margin-bottom:6px}
+.lead{font-size:14.5px;line-height:1.5;color:var(--muted);max-width:1080px;margin-bottom:18px}
+.dark .lead{color:#CFC8B8}
+p{font-size:13px;line-height:1.5}
+.small{font-size:11.5px;line-height:1.5;color:var(--muted)}
+code{font-family:var(--mono);font-size:.9em;background:var(--beige);padding:1px 5px;border-radius:3px;color:var(--accent-dk)}
+.dark code,.codeblock code{background:none;padding:0;color:inherit}
+strong{font-weight:700}
+.acc{color:var(--accent-dk)}
+
+/* ---------- footer ---------- */
+.foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:14px 0 18px;font-size:9.5px;color:var(--muted)}
+.dark .foot{color:#8F897A}
+.foot a{text-decoration:none;border-bottom:1px solid var(--line)}
+.foot a:hover{color:var(--accent-dk)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- body area ---------- */
+.body{flex:1;min-height:0;display:flex;flex-direction:column}
+.grid{display:grid;gap:16px}
+.grid>*{min-width:0}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g-55-45{grid-template-columns:1.15fr .85fr}
+.g-45-55{grid-template-columns:.85fr 1.15fr}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px 18px;box-shadow:0 1px 3px rgba(61,57,41,.07)}
+.card.beige{background:var(--beige);box-shadow:none}
+.card.dk{background:var(--dark);border-color:var(--dark);color:#EDE7DB}
+.card.dk h3{color:#fff}
+.card h3{color:var(--ink)}
+.card h3.acc{color:var(--accent-dk)}
+.card p{color:var(--muted);font-size:13px}
+.card.dk p{color:#CFC8B8}
+.badge{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 13px var(--sans);margin-bottom:10px;flex:none}
+.tag{display:inline-block;font:700 9.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--accent-dk);background:#F7E3DA;border-radius:3px;padding:4px 6px;margin-bottom:8px}
+.callout{border-left:3px solid var(--accent);background:var(--paper);padding:11px 14px;border-radius:0 6px 6px 0;font-size:12.5px;line-height:1.5;color:var(--ink)}
+.callout.beige{background:var(--beige)}
+ul.dash{list-style:none}
+ul.dash li{font-size:13px;line-height:1.45;color:var(--ink);padding-left:16px;position:relative;margin-bottom:5px}
+ul.dash li::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.card ul.dash li{color:var(--muted)}
+
+/* ---------- tablas ---------- */
+table.t{width:100%;border-collapse:collapse;font-size:12.5px;line-height:1.4;background:var(--paper);border:1px solid var(--line)}
+table.t th{background:var(--ink);color:#fff;text-align:left;font-weight:700;padding:9px 12px;font-size:11.5px}
+table.t td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink)}
+table.t tr:nth-child(even) td{background:var(--row)}
+table.t td:first-child{font-weight:700}
+table.t td.mono,table.t td .mono{font-family:var(--mono);font-size:11px;color:var(--accent-dk)}
+.tablewrap{overflow-x:auto}
+
+/* ---------- código ---------- */
+.codeblock{background:var(--dark);color:var(--code-tx);border-radius:6px;padding:16px 18px;font:12.5px/1.6 var(--mono);white-space:pre;overflow:auto;min-height:0}
+.codeblock .fn{color:var(--accent);display:block;margin-bottom:6px}
+.codeblock .c{color:var(--code-cm)}
+.codeblock .k{color:var(--accent)}
+.codeblock .s{color:var(--code-st)}
+.codeblock.sm{font-size:11.5px;line-height:1.55}
+
+/* ---------- barras ---------- */
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:150px 1fr 64px;align-items:center;gap:10px;font-size:12px}
+.bar .lbl{color:var(--ink);font-weight:700;text-align:right;line-height:1.2}
+.bar .lbl small{display:block;font-weight:400;color:var(--muted);font-size:10.5px}
+.bar .track{height:20px;background:var(--beige);border-radius:3px;position:relative;overflow:hidden}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:3px}
+.bar .fill.alt{background:var(--ink)}
+.bar .val{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:700}
+.dbl .track{height:12px}
+.dbl .pair{display:flex;flex-direction:column;gap:3px}
+.legend{display:flex;gap:16px;font-size:11px;color:var(--muted);margin-bottom:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* ---------- checks (resumen) ---------- */
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px}
+.check{display:flex;gap:12px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:17px 18px;font-size:14px;line-height:1.5}
+.check .tick{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+
+/* ---------- títulos de portada / divisores ---------- */
+.cover{justify-content:center;padding-left:84px}
+.cover .ai{position:absolute;top:44px;left:84px;width:46px;height:46px;border-radius:50%;background:var(--accent);color:#fff;font:700 15px var(--sans);display:flex;align-items:center;justify-content:center}
+.cover h1{font-size:54px;line-height:1.08;margin-bottom:20px;color:#F7F3EA}
+.cover .lead{font-size:15px;max-width:760px}
+.cover .date{position:absolute;left:84px;bottom:40px;font-size:11px;color:#A8A192}
+.divider{justify-content:center;padding-left:84px}
+.divider h2{font-size:46px;line-height:1.12;margin-bottom:16px}
+.divider .lead{max-width:720px}
+.divider .foot{position:absolute;right:64px;bottom:0}
+
+/* ---------- svg diagramas ---------- */
+svg.diag{width:100%;height:auto;display:block}
+svg.diag text{font-family:var(--sans)}
+
+/* ---------- navegación ---------- */
+#nav{transition:opacity .4s;position:fixed;bottom:14px;right:16px;display:flex;align-items:center;gap:6px;z-index:10;font:12px var(--sans);color:#CFC8B8}
+#nav button{background:rgba(38,38,36,.85);color:#F2EDE3;border:1px solid #4a4640;border-radius:5px;width:34px;height:30px;font-size:15px;cursor:pointer}
+#nav button:hover{background:var(--accent);border-color:var(--accent)}
+#nav .count{background:rgba(38,38,36,.85);border:1px solid #4a4640;border-radius:5px;padding:6px 10px;font-variant-numeric:tabular-nums}
+body.idle #nav{opacity:0;pointer-events:none}
+#progress{position:fixed;left:0;top:0;height:3px;background:var(--accent);z-index:10;transition:width .2s}
+#hint{position:fixed;bottom:16px;left:16px;font:11px var(--sans);color:#8F897A;z-index:10}
+
+/* ---------- modo documento (pantallas chicas) ---------- */
+body.doc{overflow:auto;background:var(--bg)}
+body.doc #deck{position:static;display:block}
+body.doc #stage{width:auto;height:auto;transform:none!important}
+body.doc .slide{position:relative;display:flex;padding:34px 16px 0;border-bottom:6px solid var(--beige);min-height:0}
+body.doc .slide.dark{border-bottom-color:#1b1a19}
+body.doc .grid{grid-template-columns:1fr!important}
+body.doc .checks{grid-template-columns:1fr}
+body.doc h2{font-size:26px}
+body.doc .cover,body.doc .divider{padding:80px 16px 60px}
+body.doc .cover .ai{left:16px;top:24px}
+body.doc .cover .date{position:static;margin-top:28px}
+body.doc .cover h1{font-size:36px}
+body.doc .divider h2{font-size:32px}
+body.doc .divider .foot{position:static}
+body.doc .bar{grid-template-columns:96px 1fr 52px}
+body.doc .codeblock{font-size:11px}
+body.doc #nav,body.doc #hint{display:none}
+body.doc .hide-doc{display:none}
+
+/* ---------- impresión: una diapositiva por página ---------- */
+@media print{
+  @page{size:1280px 720px;margin:0}
+  body{background:none;overflow:visible}
+  #deck{position:static;display:block}
+  #stage{transform:none!important;width:1280px;height:auto}
+  .slide{display:flex!important;position:relative;width:1280px;height:720px;page-break-after:always;break-after:page}
+  #nav,#progress,#hint{display:none}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="deck"><div id="stage">
+
+<!-- 01 PORTADA -->
+<section class="slide dark cover" data-title="Portada">
+  <div class="ai">AI</div>
+  <div class="kicker">Taller técnico · Parte 2</div>
+  <h1>LLM para Desarrollo<br>de Software: avanzado</h1>
+  <p class="lead">Extender Claude Code con skills, hooks y plugins; diseñar y orquestar agentes; y correr modelos locales con RAG y fine-tuning.</p>
+  <div class="date">Octubre 2026 · Continuación de la Parte 1 (julio 2026)</div>
+</section>
+
+<!-- 02 OBJETIVOS -->
+<section class="slide" data-title="Objetivos">
+  <div class="kicker">Introducción</div>
+  <h2>Objetivos de esta segunda parte</h2>
+  <p class="lead">En la Parte 1 vimos cómo usar Claude y Claude Code bien. Ahora pasamos a construir sobre ellos: personalizarlos, ponerlos a trabajar en paralelo y llevar parte del trabajo a modelos que corren en tu máquina.</p>
+  <div class="body">
+    <div class="grid g4">
+      <div class="card"><div class="badge">1</div><h3>Extender</h3><p>Empaquetar flujos de trabajo como skills, garantizar reglas con hooks y compartir todo como plugin.</p></div>
+      <div class="card"><div class="badge">2</div><h3>Orquestar</h3><p>Elegir entre workflow y agente, y entre subagentes, agent teams, worktrees o el Agent SDK.</p></div>
+      <div class="card"><div class="badge">3</div><h3>Correr local</h3><p>Entender cuantización y memoria para elegir un modelo abierto que entre en tu hardware.</p></div>
+      <div class="card"><div class="badge">4</div><h3>Recuperar y adaptar</h3><p>Armar un RAG, mejorar su precisión y decidir cuándo conviene contexto largo o fine-tuning.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span></span><span class="num"></span></div>
+</section>
+
+<!-- 03 AGENDA -->
+<section class="slide" data-title="Agenda">
+  <div class="kicker">Recorrido</div>
+  <h2>Agenda del taller</h2>
+  <div class="body">
+    <div class="grid g3" style="margin-top:8px">
+      <div class="card"><h3 class="acc">Bloque 1 · Extender Claude Code</h3>
+        <ul class="dash" style="margin-top:10px"><li>Mapa: CLAUDE.md, skills, hooks, subagentes, MCP y plugins</li><li>Anatomía de una skill y carga progresiva</li><li>Skills avanzadas: fork, contexto dinámico, argumentos</li><li>Hooks: ciclo de vida, exit codes y tipos</li><li>Plugins y marketplaces</li></ul></div>
+      <div class="card"><h3 class="acc">Bloque 2 · Agentes y orquestación</h3>
+        <ul class="dash" style="margin-top:10px"><li>Workflows vs agentes: los patrones</li><li>El loop agéntico</li><li>Subagentes, agent teams, worktrees y headless</li><li>Claude Agent SDK</li><li>Buenas prácticas multi-agente</li></ul></div>
+      <div class="card"><h3 class="acc">Bloque 3 · LLM locales y RAG</h3>
+        <ul class="dash" style="margin-top:10px"><li>Por qué (y cuándo) correr local</li><li>Cuantización, memoria y MoE</li><li>Ollama en la práctica (y con Claude Code)</li><li>RAG: pipeline, código y mejoras</li><li>Contexto largo vs RAG vs fine-tuning (LoRA)</li></ul></div>
+    </div>
+    <div class="callout beige" style="margin-top:18px">Antes de arrancar: una <strong>puesta al día</strong> de lo que cambió desde julio, porque algunos datos de la Parte 1 ya quedaron viejos.</div>
+  </div>
+  <div class="foot"><span></span><span class="num"></span></div>
+</section>
+
+<!-- 04 PUESTA AL DÍA -->
+<section class="slide" data-title="Puesta al día">
+  <div class="kicker">Puesta al día</div>
+  <h2>Qué cambió desde la Parte 1</h2>
+  <p class="lead">En tres meses salió una generación nueva de modelos Claude, con precios iguales o más bajos. La tabla de la diapositiva 5 de la Parte 1 queda así:</p>
+  <div class="body">
+    <div class="grid g-55-45">
+      <div class="tablewrap"><table class="t">
+        <thead><tr><th>En julio</th><th>Precio in / out</th><th>Hoy</th><th>Precio in / out</th></tr></thead>
+        <tbody>
+          <tr><td>Claude Fable 5</td><td>$10 / $50</td><td>Claude Fable 5.1</td><td>$10 / $50</td></tr>
+          <tr><td>Claude Opus 4.8</td><td>$5 / $25</td><td>Claude Opus 5.5</td><td>$4 / $20</td></tr>
+          <tr><td>Claude Sonnet 5</td><td>$3 / $15*</td><td>Claude Sonnet 5.5</td><td>$2 / $10</td></tr>
+          <tr><td>Claude Haiku 4.5</td><td>$1 / $5</td><td>Claude Haiku 5.5</td><td>$0.10 / $0.50**</td></tr>
+        </tbody>
+      </table>
+      <p class="small" style="margin-top:8px">USD por millón de tokens. *Con precio de lanzamiento de $2 / $10. **Prompts de hasta 100K tokens; por encima, $0.50 / $2.50. La lectura en caché ahora cuesta entre 2,5% y 10% del input base (antes, 10%).</p></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card dk"><span class="tag" style="background:#4a3a32;color:#F2B8A0">Corrección</span><h3>Modelos abiertos dentro de Claude Code</h3><p>En la Parte 1 dijimos que no se podía. Hoy Ollama expone una API compatible con la de Anthropic, así que Claude Code puede usar un modelo local. No es soporte oficial de Anthropic y el resultado depende mucho del modelo: lo vemos en el Bloque 3.</p></div>
+        <div class="callout">Lo que <strong>no</strong> cambió: la lógica para elegir modelo y effort de la Parte 1 sigue vigente. Lo que cambian son los nombres y los números.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://platform.claude.com/docs/en/about-claude/pricing" target="_blank" rel="noopener">platform.claude.com/docs — Pricing</a> (oct. 2026) · <a href="https://docs.ollama.com/integrations/claude-code" target="_blank" rel="noopener">docs.ollama.com — Claude Code</a></span><span class="num"></span></div>
+</section>
+
+<!-- 05 DIVISOR BLOQUE 1 -->
+<section class="slide dark divider" data-title="Bloque 1">
+  <div class="kicker">Bloque 1</div>
+  <h2>Extender Claude Code:<br>skills, hooks y plugins</h2>
+  <p class="lead">Cómo pasar de escribir el mismo prompt todas las semanas a tener flujos empaquetados, reglas que se cumplen siempre y un kit que el equipo instala con un comando.</p>
+  <div class="foot"><span></span><span class="num"></span></div>
+</section>
+
+<!-- 06 MAPA DE EXTENSIONES -->
+<section class="slide" data-title="Mapa de extensiones">
+  <div class="kicker">Extender</div>
+  <h2>El mapa: qué mecanismo usar para qué</h2>
+  <p class="lead">Todos agregan algo a Claude Code, pero difieren en cuándo se cargan y en si dependen de que el modelo decida usarlos.</p>
+  <div class="body">
+    <div class="tablewrap"><table class="t">
+      <thead><tr><th style="width:13%">Mecanismo</th><th style="width:30%">Qué es</th><th style="width:27%">Cuándo entra en juego</th><th>Ideal para</th></tr></thead>
+      <tbody>
+        <tr><td>CLAUDE.md</td><td>Instrucciones persistentes del proyecto</td><td>Siempre, al iniciar cada sesión</td><td>Comandos y convenciones que aplican en todas las tareas</td></tr>
+        <tr><td>Skill</td><td>Instrucciones, referencias y scripts en una carpeta con <code>SKILL.md</code></td><td>La descripción, siempre; el resto, solo al usarla</td><td>Flujos repetibles y material de referencia largo</td></tr>
+        <tr><td>Hook</td><td>Comando que corre en un evento del ciclo de vida</td><td>Lo ejecuta Claude Code, no el modelo: es determinista</td><td>Reglas que tienen que cumplirse siempre, sin excepción</td></tr>
+        <tr><td>Subagente</td><td>Agente con su propio contexto, prompt y herramientas</td><td>Cuando se le delega una tarea</td><td>Investigar o revisar sin ensuciar la conversación principal</td></tr>
+        <tr><td>MCP</td><td>Servidor que expone herramientas y datos externos</td><td>Las herramientas se buscan y cargan bajo demanda</td><td>Conectar sistemas: bases de datos, Jira, Slack, Figma</td></tr>
+        <tr><td>Plugin</td><td>Paquete versionado con cualquiera de los anteriores</td><td>Mientras esté habilitado</td><td>Compartir un setup completo con el equipo o la clase</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout beige" style="margin-top:14px">Regla práctica: si lo tiene que <strong>saber</strong> siempre → CLAUDE.md. Si lo tiene que <strong>saber hacer</strong> a veces → skill. Si tiene que <strong>pasar</strong> sí o sí → hook.</div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/plugins" target="_blank" rel="noopener">code.claude.com/docs — Plugins overview, Skills, Hooks</a></span><span class="num"></span></div>
+</section>
+
+<!-- 07 ANATOMÍA DE UNA SKILL -->
+<section class="slide" data-title="Anatomía de una skill">
+  <div class="kicker">Skills</div>
+  <h2>Anatomía de una skill</h2>
+  <p class="lead">Una skill es una carpeta con un <code>SKILL.md</code>: frontmatter YAML arriba e instrucciones en Markdown abajo. Claude la usa cuando la tarea coincide con su descripción, o la invocás vos con <code>/nombre</code>.</p>
+  <div class="body">
+    <div class="grid g-45-55" style="align-items:start">
+      <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
+        <div class="codeblock sm"><span class="fn">.claude/skills/crear-endpoint/</span>├── SKILL.md        <span class="c"># obligatorio</span>
+├── reference.md    <span class="c"># se lee si hace falta</span>
+├── examples.md     <span class="c"># se lee si hace falta</span>
+└── scripts/
+    └── validar.py  <span class="c"># se ejecuta, no se carga</span></div>
+        <div class="tablewrap"><table class="t">
+          <thead><tr><th>Alcance</th><th>Ruta</th></tr></thead>
+          <tbody>
+            <tr><td>Personal</td><td class="mono">~/.claude/skills/&lt;nombre&gt;/</td></tr>
+            <tr><td>Proyecto</td><td class="mono">.claude/skills/&lt;nombre&gt;/</td></tr>
+            <tr><td>Plugin</td><td class="mono">&lt;plugin&gt;/skills/&lt;nombre&gt;/</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small">La de proyecto se commitea y la recibe todo el equipo. Las de plugin quedan con espacio de nombres: <code>/mi-plugin:skill</code>.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
+        <div class="codeblock"><span class="fn">SKILL.md</span><span class="c">---</span>
+<span class="k">name:</span> crear-endpoint
+<span class="k">description:</span> <span class="s">Crea un endpoint REST en Laravel con las
+  convenciones del proyecto. Usala cuando pidan una ruta,
+  un controlador o un recurso de API nuevo.</span>
+<span class="k">argument-hint:</span> [recurso]
+<span class="c">---</span>
+Crear el endpoint para $ARGUMENTS:
+1. Leé las convenciones en reference.md
+2. Generá migración, modelo, controlador y FormRequest
+3. Escribí un test de feature y corré `php artisan test`
+4. Si algo falla, corregilo antes de terminar</div>
+        <div class="callout">La <strong>description</strong> es lo único que Claude ve para decidir si la usa: escribila como un disparador (“usala cuando…”). Mantené el <code>SKILL.md</code> por debajo de 500 líneas y mandá el detalle a archivos de soporte.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/skills" target="_blank" rel="noopener">code.claude.com/docs — Skills</a></span><span class="num"></span></div>
+</section>
+
+<!-- 08 CARGA PROGRESIVA -->
+<section class="slide" data-title="Carga progresiva">
+  <div class="kicker">Skills</div>
+  <h2>Carga progresiva: por qué las skills escalan</h2>
+  <p class="lead">Una skill no ocupa contexto hasta que se usa. Eso permite tener decenas instaladas sin pagar sus instrucciones completas en cada turno, algo que un CLAUDE.md largo no puede hacer.</p>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card"><span class="tag">Nivel 1 · siempre</span><h3>Nombre y descripción</h3><p>Están en el contexto de cada turno para que Claude sepa que la skill existe. La descripción (con <code>when_to_use</code>) se trunca a 1.536 caracteres.</p></div>
+      <div class="card"><span class="tag">Nivel 2 · al invocarla</span><h3>El cuerpo de SKILL.md</h3><p>Se carga cuando Claude o vos la invocan y queda en el contexto el resto de la sesión. Tras una compactación conserva sus primeros 5.000 tokens.</p></div>
+      <div class="card"><span class="tag">Nivel 3 · si hace falta</span><h3>Archivos de soporte</h3><p>Referencias y ejemplos se leen solo cuando la tarea los necesita. Los scripts se ejecutan sin cargar su código en el contexto.</p></div>
+    </div>
+    <h3 style="margin:20px 0 10px">Quién puede invocarla</h3>
+    <div class="tablewrap"><table class="t">
+      <thead><tr><th style="width:34%">Frontmatter</th><th style="width:14%">Vos</th><th style="width:14%">Claude</th><th>Usalo para</th></tr></thead>
+      <tbody>
+        <tr><td>(por defecto)</td><td>Sí</td><td>Sí</td><td>La mayoría de las skills</td></tr>
+        <tr><td class="mono">disable-model-invocation: true</td><td>Sí</td><td>No</td><td>Acciones con efectos, como <code>/deploy</code>: que solo corran cuando vos lo pedís</td></tr>
+        <tr><td class="mono">user-invocable: false</td><td>No</td><td>Sí</td><td>Conocimiento de fondo que no tiene sentido como comando</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/skills" target="_blank" rel="noopener">code.claude.com/docs — Skills (carga en contexto e invocación)</a></span><span class="num"></span></div>
+</section>
+
+<!-- 09 SKILLS AVANZADAS -->
+<section class="slide" data-title="Skills avanzadas">
+  <div class="kicker">Skills</div>
+  <h2>Skills avanzadas: subagente, contexto dinámico y argumentos</h2>
+  <p class="lead">Con unos pocos campos más, una skill puede correr aislada en un subagente y arrancar con datos frescos del repo.</p>
+  <div class="body">
+    <div class="grid g-55-45" style="align-items:start">
+      <div class="codeblock"><span class="fn">.claude/skills/revisar-pr/SKILL.md</span><span class="c">---</span>
+<span class="k">name:</span> revisar-pr
+<span class="k">description:</span> <span class="s">Revisa los cambios de la rama antes de abrir un PR</span>
+<span class="k">disable-model-invocation:</span> true
+<span class="k">context:</span> fork
+<span class="k">agent:</span> Explore
+<span class="k">model:</span> opus
+<span class="c">---</span>
+## Cambios a revisar
+!`git diff main...HEAD`
+
+## Tarea
+Revisá el diff anterior buscando bugs, casos borde sin
+tests y desvíos de las convenciones del proyecto.
+Devolvé una lista priorizada con archivo y línea.
+Foco adicional: $ARGUMENTS</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card"><h3 class="acc"><code>context: fork</code> + <code>agent</code></h3><p>La skill corre en un subagente (acá, el <code>Explore</code> de solo lectura). No ve tu conversación, así que las instrucciones tienen que ser autocontenidas.</p></div>
+        <div class="card"><h3 class="acc"><code>!`comando`</code></h3><p>Corre el comando antes de que Claude lea la skill y reemplaza el marcador por la salida. Si el comando falla, la skill no se ejecuta.</p></div>
+        <div class="card"><h3 class="acc"><code>$ARGUMENTS</code>, <code>$0</code>, <code>${CLAUDE_SKILL_DIR}</code></h3><p>Lo que escribís después de <code>/revisar-pr</code>, un argumento por posición, o la carpeta de la propia skill para llamar a sus scripts.</p></div>
+        <div class="card"><h3 class="acc"><code>allowed-tools</code>, <code>model</code>, <code>effort</code></h3><p>Preaprueban herramientas o cambian modelo y effort solo mientras la skill está activa.</p></div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:10px">Portabilidad: en claude.ai y la API de Skills solo se aceptan <code>name</code>, <code>description</code>, <code>license</code>, <code>compatibility</code>, <code>metadata</code> y <code>allowed-tools</code>. Los demás campos son exclusivos de Claude Code.</p>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/skills" target="_blank" rel="noopener">code.claude.com/docs — Skills (frontmatter, sustituciones, inyección de contexto)</a></span><span class="num"></span></div>
+</section>
+
+<!-- 10 HOOKS CICLO DE VIDA -->
+<section class="slide" data-title="Hooks: ciclo de vida">
+  <div class="kicker">Hooks</div>
+  <h2>Hooks: puntos fijos en el ciclo de vida</h2>
+  <p class="lead">Un hook es un comando que Claude Code ejecuta cuando ocurre un evento. No depende de que el modelo “se acuerde”: si el evento ocurre, el hook corre.</p>
+  <div class="body">
+    <svg class="diag" viewBox="0 0 1152 230" role="img" aria-label="Ciclo de vida de una sesión con los eventos principales de hooks">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B9B2A0"/></marker>
+      <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker></defs>
+      <g font-size="13" font-weight="700" text-anchor="middle">
+        <rect x="0" y="80" width="140" height="54" rx="6" fill="#fff" stroke="#E4DDCC"/><text x="70" y="104" fill="#3D3929">SessionStart</text><text x="70" y="122" font-size="10.5" font-weight="400" fill="#6B6658">inicia o retoma</text>
+        <rect x="168" y="80" width="140" height="54" rx="6" fill="#fff" stroke="#E4DDCC"/><text x="238" y="104" fill="#3D3929">UserPromptSubmit</text><text x="238" y="122" font-size="10.5" font-weight="400" fill="#6B6658">llega tu prompt</text>
+        <rect x="336" y="80" width="140" height="54" rx="6" fill="#F7E3DA" stroke="#D97757"/><text x="406" y="104" fill="#BD5D3A">PreToolUse</text><text x="406" y="122" font-size="10.5" font-weight="400" fill="#6B6658">puede bloquear</text>
+        <rect x="504" y="80" width="140" height="54" rx="6" fill="#262624"/><text x="574" y="104" fill="#fff">Herramienta</text><text x="574" y="122" font-size="10.5" font-weight="400" fill="#CFC8B8">Edit, Bash, MCP…</text>
+        <rect x="672" y="80" width="140" height="54" rx="6" fill="#F7E3DA" stroke="#D97757"/><text x="742" y="104" fill="#BD5D3A">PostToolUse</text><text x="742" y="122" font-size="10.5" font-weight="400" fill="#6B6658">después del éxito</text>
+        <rect x="840" y="80" width="140" height="54" rx="6" fill="#fff" stroke="#E4DDCC"/><text x="910" y="104" fill="#3D3929">Stop</text><text x="910" y="122" font-size="10.5" font-weight="400" fill="#6B6658">termina de responder</text>
+        <rect x="1008" y="80" width="140" height="54" rx="6" fill="#fff" stroke="#E4DDCC"/><text x="1078" y="104" fill="#3D3929">SessionEnd</text><text x="1078" y="122" font-size="10.5" font-weight="400" fill="#6B6658">cierra la sesión</text>
+      </g>
+      <g stroke="#B9B2A0" stroke-width="1.6" fill="none" marker-end="url(#ah)">
+        <line x1="142" y1="107" x2="165" y2="107"/><line x1="310" y1="107" x2="333" y2="107"/><line x1="478" y1="107" x2="501" y2="107"/><line x1="646" y1="107" x2="669" y2="107"/><line x1="814" y1="107" x2="837" y2="107"/><line x1="982" y1="107" x2="1005" y2="107"/>
+      </g>
+      <path d="M742,78 C742,22 406,22 406,76" fill="none" stroke="#D97757" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#aha)"/>
+      <text x="574" y="30" text-anchor="middle" font-size="11.5" fill="#BD5D3A" font-weight="700">se repite por cada llamada a herramienta</text>
+      <path d="M910,136 C910,200 238,200 238,138" fill="none" stroke="#B9B2A0" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ah)"/>
+      <text x="574" y="196" text-anchor="middle" font-size="11.5" fill="#6B6658">siguiente prompt</text>
+    </svg>
+    <div class="grid g-55-45" style="margin-top:10px">
+      <div class="card beige"><h3>Más de 30 eventos en total, por ejemplo</h3>
+        <p style="font-family:var(--mono);font-size:11px;line-height:1.75;color:var(--ink)">PermissionRequest · Notification · SubagentStart · SubagentStop · PreCompact · PostCompact · TaskCreated · TaskCompleted · TeammateIdle · FileChanged · CwdChanged · WorktreeCreate · ConfigChange · InstructionsLoaded</p></div>
+      <div class="callout" style="align-self:start">El <code>matcher</code> filtra cuándo dispara: por ejemplo <code>"Edit|Write"</code> en PreToolUse/PostToolUse, o <code>"compact"</code> en SessionStart para reinyectar contexto después de compactar.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/hooks-guide" target="_blank" rel="noopener">code.claude.com/docs — Automate actions with hooks</a></span><span class="num"></span></div>
+</section>
+
+<!-- 11 HOOKS EN PRÁCTICA -->
+<section class="slide" data-title="Hooks en práctica">
+  <div class="kicker">Hooks</div>
+  <h2>Hooks en práctica: formatear y proteger archivos</h2>
+  <p class="lead">El hook recibe un JSON por stdin con los datos del evento y responde con su exit code (o con JSON por stdout para un control más fino).</p>
+  <div class="body">
+    <div class="grid g-55-45" style="align-items:start">
+      <div class="codeblock sm"><span class="fn">.claude/settings.json</span>{
+  <span class="k">"hooks"</span>: {
+    <span class="k">"PostToolUse"</span>: [{
+      <span class="k">"matcher"</span>: <span class="s">"Edit|Write"</span>,
+      <span class="k">"hooks"</span>: [{ <span class="k">"type"</span>: <span class="s">"command"</span>,
+        <span class="k">"command"</span>: <span class="s">"jq -r '.tool_input.file_path' | xargs npx prettier --write"</span> }]
+    }],
+    <span class="k">"PreToolUse"</span>: [{
+      <span class="k">"matcher"</span>: <span class="s">"Edit|Write"</span>,
+      <span class="k">"hooks"</span>: [{ <span class="k">"type"</span>: <span class="s">"command"</span>,
+        <span class="k">"command"</span>: <span class="s">"\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/proteger.sh"</span> }]
+    }]
+  }
+}</div>
+      <div class="codeblock sm"><span class="fn">.claude/hooks/proteger.sh</span><span class="c">#!/bin/bash</span>
+INPUT=$(cat)
+FILE=$(echo "$INPUT" | jq -r <span class="s">'.tool_input.file_path // empty'</span>)
+
+PROTEGIDOS=(<span class="s">".env"</span> <span class="s">"package-lock.json"</span> <span class="s">".git/"</span>)
+
+<span class="k">for</span> p <span class="k">in</span> "${PROTEGIDOS[@]}"; <span class="k">do</span>
+  <span class="k">if</span> [[ "$FILE" == *"$p"* ]]; <span class="k">then</span>
+    echo <span class="s">"Bloqueado: $FILE es un archivo protegido"</span> >&amp;2
+    <span class="k">exit 2</span>   <span class="c"># bloquea y le explica a Claude por qué</span>
+  <span class="k">fi</span>
+<span class="k">done</span>
+<span class="k">exit 0</span></div>
+    </div>
+    <div class="grid g3" style="margin-top:12px">
+      <div class="card"><h3><code>exit 0</code></h3><p>Sin objeción. Si además imprime JSON por stdout, ese JSON decide (permitir, preguntar, agregar contexto).</p></div>
+      <div class="card"><h3><code>exit 2</code></h3><p>Bloquea la acción. Lo que escribiste en stderr le llega a Claude como feedback para que cambie de enfoque.</p></div>
+      <div class="card"><h3>Otro código</h3><p>No bloquea. Si hay varios hooks, gana la decisión más restrictiva: deny, después ask, después allow.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/hooks-guide" target="_blank" rel="noopener">code.claude.com/docs — Hooks guide</a> (ejemplos adaptados). Requiere <code>jq</code>; el script debe ser ejecutable (<code>chmod +x</code>).</span><span class="num"></span></div>
+</section>
+
+<!-- 12 TIPOS DE HOOKS -->
+<section class="slide" data-title="Tipos de hooks">
+  <div class="kicker">Hooks</div>
+  <h2>Tipos de hooks y cuándo usar cada uno</h2>
+  <p class="lead">La mayoría son comandos de shell, pero un hook también puede llamar a una URL, a una herramienta MCP o a un modelo que evalúe la situación.</p>
+  <div class="body">
+    <div class="grid" style="grid-template-columns:repeat(5,1fr)">
+      <div class="card"><span class="tag">command</span><p>Corre un comando de shell. Determinista y rápido: el caso típico.</p></div>
+      <div class="card"><span class="tag">http</span><p>Envía los datos del evento por POST a una URL: auditoría, dashboards, Slack.</p></div>
+      <div class="card"><span class="tag">mcp_tool</span><p>Llama a una herramienta de un servidor MCP ya configurado.</p></div>
+      <div class="card"><span class="tag">prompt</span><p>Un modelo evalúa en un turno algo que requiere criterio, no una regla fija.</p></div>
+      <div class="card"><span class="tag">agent</span><p>Verificación de varios turnos con herramientas. Experimental.</p></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card beige"><h3>CLAUDE.md pide, el hook garantiza</h3>
+        <ul class="dash" style="margin-top:8px">
+          <li><strong>En CLAUDE.md:</strong> “corré el linter después de editar”. Casi siempre lo hace, pero con el contexto lleno se le puede pasar.</li>
+          <li><strong>Con un hook PostToolUse:</strong> el linter corre después de cada edición, sin excepción y sin gastar tokens del modelo.</li>
+        </ul></div>
+      <div class="card"><h3>Hooks útiles para empezar</h3>
+        <ul class="dash" style="margin-top:8px">
+          <li>Formatear después de cada Edit/Write</li>
+          <li>Bloquear <code>rm -rf</code> o pushes a <code>main</code> (PreToolUse sobre Bash)</li>
+          <li>Notificación de escritorio cuando Claude espera tu respuesta</li>
+          <li>Reinyectar reglas clave después de compactar (SessionStart + <code>compact</code>)</li>
+          <li>Loguear cada comando de Bash a un archivo</li>
+        </ul></div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/hooks-guide" target="_blank" rel="noopener">code.claude.com/docs — Hooks guide (hook types)</a></span><span class="num"></span></div>
+</section>
+
+<!-- 13 PLUGINS -->
+<section class="slide" data-title="Plugins">
+  <div class="kicker">Plugins</div>
+  <h2>Plugins: empaquetar y compartir todo junto</h2>
+  <p class="lead">Un plugin es una carpeta con un manifiesto que agrupa skills, subagentes, hooks y servidores MCP. Se instala como una unidad desde un marketplace: un repo con un catálogo de plugins.</p>
+  <div class="body">
+    <div class="grid g3" style="align-items:start">
+      <div class="codeblock sm"><span class="fn">utu-dev-kit/</span>├── .claude-plugin/
+│   └── plugin.json
+├── skills/
+│   └── revisar-pr/SKILL.md
+│       <span class="c">→ /utu-dev-kit:revisar-pr</span>
+├── agents/
+│   └── revisor.md
+│       <span class="c">→ subagente</span>
+├── hooks/
+│   └── hooks.json
+│       <span class="c">→ hooks del plugin</span>
+└── .mcp.json
+        <span class="c">→ servidores MCP</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="codeblock sm"><span class="fn">.claude-plugin/plugin.json</span>{
+  <span class="k">"name"</span>: <span class="s">"utu-dev-kit"</span>,
+  <span class="k">"version"</span>: <span class="s">"1.0.0"</span>,
+  <span class="k">"description"</span>: <span class="s">"Skills y hooks del
+    curso de Programación Avanzada"</span>
+}</div>
+        <div class="callout">El marketplace es un repo con <code>.claude-plugin/marketplace.json</code> que lista los plugins y de dónde bajarlos. Es un catálogo, no una tienda.</div>
+      </div>
+      <div class="codeblock sm"><span class="c"># explorar e instalar (pestaña Discover)</span>
+/plugin
+
+<span class="c"># agregar un marketplace</span>
+/plugin marketplace add usuario/repo
+
+<span class="c"># instalar por nombre@marketplace</span>
+/plugin install utu-dev-kit@mi-marketplace
+
+<span class="c"># probar sin marketplace</span>
+claude --plugin-dir ./utu-dev-kit
+
+<span class="c"># apagarlo sin desinstalar</span>
+claude plugin disable utu-dev-kit</div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/plugins" target="_blank" rel="noopener">code.claude.com/docs — Plugins overview</a></span><span class="num"></span></div>
+</section>
+
+<!-- 14 PLUGINS: ANTES DE INSTALAR -->
+<section class="slide" data-title="Plugins: alcance y riesgos">
+  <div class="kicker">Plugins</div>
+  <h2>Antes de instalar un plugin</h2>
+  <p class="lead">Un plugin habilitado forma parte de todas tus sesiones, no solo de las que lo usan. Conviene saber qué te cuesta y qué puede hacer.</p>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card"><div class="badge">$</div><h3>Contexto</h3><p>El nombre y la descripción de cada skill y agente que Claude puede invocar entran en el contexto en cada turno, aunque no los uses. Muchos plugins = menos espacio y más tokens.</p></div>
+      <div class="card"><div class="badge">⚙</div><h3>Procesos</h3><p>Sus servidores MCP corren junto a cada sesión y sus hooks disparan en sus eventos.</p></div>
+      <div class="card"><div class="badge">!</div><h3>Permisos</h3><p>Lo que el plugin ejecuta, lo ejecuta como vos. Revisá el código antes de instalar, sobre todo si viene de un marketplace de terceros.</p></div>
+    </div>
+    <h3 style="margin:20px 0 10px">Alcance de instalación</h3>
+    <div class="tablewrap"><table class="t">
+      <thead><tr><th style="width:16%">Alcance</th><th style="width:44%">Para quién queda habilitado</th><th>Cuándo usarlo</th></tr></thead>
+      <tbody>
+        <tr><td>User</td><td>Para vos, en todos los proyectos de esta computadora</td><td>Herramientas personales que usás en todos lados</td></tr>
+        <tr><td>Project</td><td>Para todo el que trabaje en el repo, vía <code>.claude/settings.json</code> commiteado</td><td>El kit del equipo o de la clase</td></tr>
+        <tr><td>Local</td><td>Solo para vos, solo en este repo</td><td>Probar algo sin afectar al resto</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/plugins" target="_blank" rel="noopener">code.claude.com/docs — Plugins overview (What an enabled plugin adds, install scopes)</a></span><span class="num"></span></div>
+</section>
+
+<!-- 15 DIVISOR BLOQUE 2 -->
+<section class="slide dark divider" data-title="Bloque 2">
+  <div class="kicker">Bloque 2</div>
+  <h2>Agentes y orquestación</h2>
+  <p class="lead">Cuándo conviene un agente y cuándo un flujo fijo, cómo trabaja el loop por dentro, y las opciones para poner varios Claude a trabajar a la vez.</p>
+  <div class="foot"><span></span><span class="num"></span></div>
+</section>
+
+<!-- 16 PATRONES -->
+<section class="slide" data-title="Workflows vs agentes">
+  <div class="kicker">Orquestación</div>
+  <h2>Workflows vs agentes: los patrones</h2>
+  <p class="lead">En un <strong>workflow</strong> el código define el camino y el modelo ejecuta cada paso. En un <strong>agente</strong> el modelo decide sus propios pasos y herramientas. Los workflows son más predecibles; los agentes, más flexibles y más caros.</p>
+  <div class="body">
+    <div class="grid g3">
+      <div class="card"><span class="tag">Workflow</span><h3>Encadenamiento de prompts</h3><p>Pasos secuenciales con chequeos entre medio. <strong>Cuándo:</strong> la tarea se divide limpio en subtareas fijas.</p></div>
+      <div class="card"><span class="tag">Workflow</span><h3>Ruteo</h3><p>Clasifica la entrada y la manda al prompt, herramienta o modelo adecuado. <strong>Cuándo:</strong> hay categorías distintas y se clasifican bien.</p></div>
+      <div class="card"><span class="tag">Workflow</span><h3>Paralelización</h3><p>Secciones independientes a la vez, o la misma tarea varias veces y se vota. <strong>Cuándo:</strong> querés velocidad o más confianza.</p></div>
+      <div class="card"><span class="tag">Workflow</span><h3>Orquestador–trabajadores</h3><p>Un modelo divide la tarea, delega y une los resultados. <strong>Cuándo:</strong> no sabés de antemano cuántas subtareas hay.</p></div>
+      <div class="card"><span class="tag">Workflow</span><h3>Evaluador–optimizador</h3><p>Uno genera, otro critica, en loop. <strong>Cuándo:</strong> hay criterios claros y la crítica mejora el resultado.</p></div>
+      <div class="card dk"><span class="tag" style="background:#4a3a32;color:#F2B8A0">Agente</span><h3>Agente autónomo</h3><p>Elige pasos y herramientas hasta terminar. <strong>Cuándo:</strong> problemas abiertos, con sandbox, tests y límites.</p></div>
+    </div>
+    <div class="callout beige" style="margin-top:14px">Empezá por lo más simple: muchas veces una sola llamada con buen contexto y ejemplos alcanza. Agregá complejidad solo cuando mejora el resultado de forma medible.</div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener">Anthropic — Building effective agents</a></span><span class="num"></span></div>
+</section>
+
+<!-- 17 LOOP AGÉNTICO -->
+<section class="slide" data-title="El loop agéntico">
+  <div class="kicker">Orquestación</div>
+  <h2>El loop agéntico por dentro</h2>
+  <p class="lead">Claude Code, el Agent SDK y cualquier agente comparten la misma estructura: el modelo decide, una herramienta actúa y el resultado vuelve al contexto, hasta que no hace falta otro paso.</p>
+  <div class="body">
+    <div class="grid g-55-45" style="align-items:center">
+      <svg class="diag" viewBox="0 0 640 330" role="img" aria-label="Loop agéntico: contexto, modelo, herramienta, resultado">
+        <defs><marker id="al" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+        <marker id="alg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6B6658"/></marker></defs>
+        <g font-size="14" font-weight="700" text-anchor="middle">
+          <rect x="20" y="30" width="200" height="74" rx="8" fill="#fff" stroke="#E4DDCC"/><text x="120" y="62" fill="#3D3929">1 · Contexto</text><text x="120" y="84" font-size="11" font-weight="400" fill="#6B6658">prompt + archivos + historial</text>
+          <rect x="300" y="30" width="200" height="74" rx="8" fill="#262624"/><text x="400" y="62" fill="#fff">2 · El modelo decide</text><text x="400" y="84" font-size="11" font-weight="400" fill="#CFC8B8">razona y elige el próximo paso</text>
+          <rect x="300" y="226" width="200" height="74" rx="8" fill="#F7E3DA" stroke="#D97757"/><text x="400" y="258" fill="#BD5D3A">3 · Herramienta</text><text x="400" y="280" font-size="11" font-weight="400" fill="#6B6658">Read, Edit, Bash, MCP…</text>
+          <rect x="20" y="226" width="200" height="74" rx="8" fill="#fff" stroke="#E4DDCC"/><text x="120" y="258" fill="#3D3929">4 · Resultado</text><text x="120" y="280" font-size="11" font-weight="400" fill="#6B6658">salida, error o test fallido</text>
+        </g>
+        <g stroke="#D97757" stroke-width="2" fill="none" marker-end="url(#al)">
+          <line x1="222" y1="67" x2="296" y2="67"/><line x1="400" y1="106" x2="400" y2="222"/><line x1="298" y1="263" x2="224" y2="263"/><line x1="120" y1="224" x2="120" y2="108"/>
+        </g>
+        <text x="200" y="170" text-anchor="middle" font-size="12" fill="#BD5D3A" font-weight="700">se repite</text>
+        <path d="M502,67 L600,67" stroke="#6B6658" stroke-width="2" fill="none" stroke-dasharray="5 4" marker-end="url(#alg)"/>
+        <text x="560" y="52" text-anchor="middle" font-size="11" fill="#6B6658">sin más pasos</text>
+        <text x="560" y="96" text-anchor="middle" font-size="13" font-weight="700" fill="#3D3929">Respuesta</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card"><h3>Cuándo se detiene</h3><ul class="dash"><li>El modelo responde sin pedir otra herramienta</li><li>Se alcanza un límite de turnos o de presupuesto</li><li>Necesita un permiso que no tiene</li><li>Un hook <code>Stop</code> lo deja terminar (o lo hace seguir)</li></ul></div>
+        <div class="card beige"><h3>Qué hace bueno a un agente</h3><ul class="dash"><li>Herramientas con nombres y descripciones claras</li><li>Una forma objetiva de verificar: tests, build, lint</li><li>Límites explícitos: permisos, turnos y alcance</li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://code.claude.com/docs/en/agent-sdk/overview" target="_blank" rel="noopener">code.claude.com/docs — Agent SDK (agent loop)</a> · <a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener">Building effective agents</a></span><span class="num"></span></div>
+</section>
+
+<!-- 18 FORMAS DE PARALELIZAR -->
+<section class="slide" data-title="Formas de paralelizar">
+  <div class="kicker">Orquestación</div>
+  <h2>Cuatro formas de poner varios Claude a trabajar</h2>
+  <p class="lead">Se diferencian en cuánto contexto comparten, cómo se comunican y cuánto cuestan. La regla: usá la opción más liviana que resuelva la tarea.</p>
+  <div class="body">
+    <div class="tablewrap"><table class="t">
+      <thead><tr><th style="width:15%">Opción</th><th style="width:22%">Contexto</th><th style="width:23%">Comunicación</th><th style="width:12%">Costo</th><th>Ideal para</th></tr></thead>
+      <tbody>
+        <tr><td>Subagentes</td><td>Propio; devuelve un resumen al que lo llamó</td><td>Reporta solo a la sesión principal</td><td>Bajo</td><td>Tareas acotadas donde importa el resultado, no el proceso</td></tr>
+        <tr><td>Agent teams</td><td>Cada teammate es una sesión completa e independiente</td><td>Mensajes directos entre ellos y lista de tareas compartida</td><td>Alto: escala con cada teammate</td><td>Investigar, revisar o construir features que cruzan capas</td></tr>
+        <tr><td>Worktrees</td><td>Sesiones separadas, cada una con su copia del repo</td><td>La coordinás vos</td><td>Una sesión por worktree</td><td>Trabajo en paralelo sin pisar archivos (feature + bugfix)</td></tr>
+        <tr><td>Headless / SDK</td><td>Proceso lanzado desde código o CI</td><td>Por código: JSON, streams</td><td>Según uso</td><td>CI, pipelines y productos propios</td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="codeblock sm"><span class="c"># una sesión aislada en su worktree (rama worktree-feature-auth)</span>
+claude --worktree feature-auth
+<span class="c"># otra, en paralelo, desde un PR</span>
+claude --worktree <span class="s">"#1234"</span>
+<span class="c"># modo no interactivo para CI</span>
+claude -p <span class="s">"corré los tests y resumí los fallos"</span> --output-format json</div>
+      <div class="codeblock sm"><span class="fn">.claude/agents/refactorizador.md</span><span class="c">---</span>
+<span class="k">name:</span> refactorizador
+<span class="k">description:</span> <span class="s">Aplica refactors mecánicos en muchos archivos</span>
+<span class="k">isolation:</span> worktree   <span class="c"># siempre en su propia copia</span>
+<span class="c">---</span>
+Aplicá el refactor pedido, corré los tests y reportá.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://code.claude.com/docs/en/agent-teams" target="_blank" rel="noopener">code.claude.com/docs — Agent teams</a> · <a href="https://code.claude.com/docs/en/worktrees" target="_blank" rel="noopener">Worktrees</a>. Sumá <code>.claude/worktrees/</code> a tu <code>.gitignore</code>.</span><span class="num"></span></div>
+</section>
+
+<!-- 19 AGENT TEAMS -->
+<section class="slide" data-title="Agent teams">
+  <div class="kicker">Orquestación</div>
+  <h2>Agent teams: un equipo de sesiones coordinadas</h2>
+  <p class="lead">Una sesión hace de líder: crea tareas, lanza teammates y une resultados. Los teammates trabajan cada uno en su contexto y se hablan entre sí. Es una función experimental y viene apagada.</p>
+  <div class="body">
+    <div class="grid g-55-45" style="align-items:start">
+      <svg class="diag" viewBox="0 0 620 330" role="img" aria-label="Arquitectura de agent teams: líder, lista de tareas, buzones y teammates">
+        <g font-size="13" font-weight="700" text-anchor="middle">
+          <rect x="210" y="10" width="200" height="58" rx="8" fill="#262624"/><text x="310" y="36" fill="#fff">Líder (tu sesión)</text><text x="310" y="54" font-size="10.5" font-weight="400" fill="#CFC8B8">planifica, asigna, sintetiza</text>
+          <rect x="60" y="128" width="210" height="58" rx="8" fill="#EFE8DA" stroke="#E4DDCC"/><text x="165" y="154" fill="#3D3929">Lista de tareas</text><text x="165" y="172" font-size="10.5" font-weight="400" fill="#6B6658">pendiente · en curso · lista</text>
+          <rect x="350" y="128" width="210" height="58" rx="8" fill="#EFE8DA" stroke="#E4DDCC"/><text x="455" y="154" fill="#3D3929">Buzones</text><text x="455" y="172" font-size="10.5" font-weight="400" fill="#6B6658">mensajes entre agentes</text>
+          <rect x="20" y="250" width="170" height="58" rx="8" fill="#fff" stroke="#D97757"/><text x="105" y="276" fill="#BD5D3A">Seguridad</text><text x="105" y="294" font-size="10.5" font-weight="400" fill="#6B6658">teammate</text>
+          <rect x="225" y="250" width="170" height="58" rx="8" fill="#fff" stroke="#D97757"/><text x="310" y="276" fill="#BD5D3A">Performance</text><text x="310" y="294" font-size="10.5" font-weight="400" fill="#6B6658">teammate</text>
+          <rect x="430" y="250" width="170" height="58" rx="8" fill="#fff" stroke="#D97757"/><text x="515" y="276" fill="#BD5D3A">Tests</text><text x="515" y="294" font-size="10.5" font-weight="400" fill="#6B6658">teammate</text>
+        </g>
+        <g stroke="#B9B2A0" stroke-width="1.5" fill="none">
+          <line x1="270" y1="70" x2="185" y2="126"/><line x1="350" y1="70" x2="435" y2="126"/>
+          <line x1="165" y1="188" x2="105" y2="248"/><line x1="165" y1="188" x2="310" y2="248"/><line x1="165" y1="188" x2="515" y2="248"/>
+          <line x1="455" y1="188" x2="105" y2="248"/><line x1="455" y1="188" x2="310" y2="248"/><line x1="455" y1="188" x2="515" y2="248"/>
+        </g>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="codeblock sm"><span class="fn">settings.json</span>{ <span class="k">"env"</span>: { <span class="k">"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"</span>: <span class="s">"1"</span> } }</div>
+        <div class="codeblock sm" style="white-space:pre-wrap"><span class="c"># prompt al líder</span>
+Creá un equipo de 3 teammates para revisar el PR #142: uno enfocado en seguridad, otro en performance y otro en cobertura de tests. Que cada uno reporte sus hallazgos.</div>
+        <ul class="dash">
+          <li>Empezá con 3–5 teammates y 5–6 tareas por cada uno</li>
+          <li>No heredan tu conversación: el contexto va en el prompt de creación</li>
+          <li>Cada teammate, dueño de archivos distintos, para no pisarse</li>
+          <li>Hooks <code>TaskCompleted</code> y <code>TeammateIdle</code> como controles de calidad (exit 2)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://code.claude.com/docs/en/agent-teams" target="_blank" rel="noopener">code.claude.com/docs — Orchestrate teams of Claude Code sessions</a></span><span class="num"></span></div>
+</section>
+
+<!-- 20 AGENT SDK -->
+<section class="slide" data-title="Claude Agent SDK">
+  <div class="kicker">Orquestación</div>
+  <h2>Claude Agent SDK: el motor de Claude Code como librería</h2>
+  <p class="lead">El mismo loop, herramientas, hooks, subagentes, MCP y skills de Claude Code, programables desde Python o TypeScript para meterlos en tu propia aplicación.</p>
+  <div class="body">
+    <div class="grid g-55-45" style="align-items:start">
+      <div class="codeblock sm"><span class="fn">agent.py</span><span class="k">import</span> asyncio
+<span class="k">from</span> claude_agent_sdk <span class="k">import</span> query, ClaudeAgentOptions, AssistantMessage, ResultMessage
+
+<span class="k">async def</span> main():
+    <span class="c"># loop agéntico: va emitiendo mensajes mientras Claude trabaja</span>
+    <span class="k">async for</span> message <span class="k">in</span> query(
+        prompt=<span class="s">"Revisá utils.py buscando bugs que causen errores. Arreglalos."</span>,
+        options=ClaudeAgentOptions(
+            allowed_tools=[<span class="s">"Read"</span>, <span class="s">"Edit"</span>, <span class="s">"Glob"</span>],  <span class="c"># preaprobadas</span>
+            permission_mode=<span class="s">"acceptEdits"</span>,           <span class="c"># acepta ediciones</span>
+        ),
+    ):
+        <span class="k">if</span> isinstance(message, AssistantMessage):
+            <span class="k">for</span> block <span class="k">in</span> message.content:
+                <span class="k">if</span> hasattr(block, <span class="s">"text"</span>):
+                    print(block.text)
+                <span class="k">elif</span> hasattr(block, <span class="s">"name"</span>):
+                    print(f<span class="s">"Herramienta: {block.name}"</span>)
+        <span class="k">elif</span> isinstance(message, ResultMessage):
+            print(f<span class="s">"Listo: {message.subtype}"</span>)
+
+asyncio.run(main())</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="codeblock sm">pip install claude-agent-sdk
+npm install @anthropic-ai/claude-agent-sdk
+export ANTHROPIC_API_KEY=...</div>
+        <div class="tablewrap"><table class="t">
+          <thead><tr><th>Querés…</th><th>Usá</th></tr></thead>
+          <tbody>
+            <tr><td>Trabajar en la terminal</td><td>Claude Code CLI</td></tr>
+            <tr><td>Correr el agente en tu app</td><td>Agent SDK</td></tr>
+            <tr><td>Llamar a la API y armar el loop</td><td>Client SDK</td></tr>
+            <tr><td>Que Anthropic hostee el agente</td><td>Managed Agents</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small">Se autentica con API key. Anthropic no permite que productos de terceros ofrezcan login de claude.ai ni sus límites de uso.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://code.claude.com/docs/en/agent-sdk/overview" target="_blank" rel="noopener">code.claude.com/docs — Agent SDK overview</a> · <a href="https://code.claude.com/docs/en/agent-sdk/quickstart" target="_blank" rel="noopener">Quickstart</a> (comentarios traducidos)</span><span class="num"></span></div>
+</section>
+
+<!-- 21 BUENAS PRÁCTICAS MULTI-AGENTE -->
+<section class="slide" data-title="Buenas prácticas multi-agente">
+  <div class="kicker">Orquestación</div>
+  <h2>Buenas prácticas para sistemas multi-agente</h2>
+  <p class="lead">Más agentes no es mejor por defecto: cada uno suma tokens, coordinación y posibilidades de error.</p>
+  <div class="body">
+    <div class="checks">
+      <div class="check"><span class="tick">✓</span><div><strong>Empezá simple.</strong> Un agente con buenas herramientas antes que un equipo.</div></div>
+      <div class="check"><span class="tick">✓</span><div><strong>Contexto explícito al delegar.</strong> El subagente o teammate no ve tu conversación.</div></div>
+      <div class="check"><span class="tick">✓</span><div><strong>Dividí por archivos o dominios.</strong> Dos agentes editando el mismo archivo se pisan.</div></div>
+      <div class="check"><span class="tick">✓</span><div><strong>Revisor independiente.</strong> Un agente en contexto limpio audita lo que hicieron los otros.</div></div>
+      <div class="check"><span class="tick">✓</span><div><strong>Mínimo privilegio.</strong> Cada agente, solo con las herramientas que su tarea necesita.</div></div>
+      <div class="check"><span class="tick">✓</span><div><strong>Modelo según el rol.</strong> Haiku con effort bajo para lookups; un modelo más capaz para coordinar.</div></div>
+      <div class="check"><span class="tick">✓</span><div><strong>Medí el costo.</strong> Un equipo de 4 teammates puede costar varias veces una sesión.</div></div>
+      <div class="check"><span class="tick">✓</span><div><strong>Controles automáticos.</strong> Hooks que no dejan cerrar una tarea sin tests en verde.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://code.claude.com/docs/en/agent-teams" target="_blank" rel="noopener">Agent teams — Best practices</a> · <a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener">Building effective agents</a></span><span class="num"></span></div>
+</section>
+
+<!-- 22 DIVISOR BLOQUE 3 -->
+<section class="slide dark divider" data-title="Bloque 3">
+  <div class="kicker">Bloque 3</div>
+  <h2>LLM locales y RAG</h2>
+  <p class="lead">Cuánta memoria hace falta, qué modelo entra en tu máquina, cómo darle a un modelo conocimiento que no tiene, y cuándo vale la pena entrenarlo.</p>
+  <div class="foot"><span></span><span class="num"></span></div>
+</section>
+
+<!-- 23 POR QUÉ LOCAL -->
+<section class="slide" data-title="Por qué local">
+  <div class="kicker">LLM locales</div>
+  <h2>¿Por qué (y cuándo) correr un modelo local?</h2>
+  <p class="lead">Un modelo abierto en tu máquina cambia el costo por token por costo de hardware, y la calidad de frontera por control total.</p>
+  <div class="body">
+    <div class="grid g2">
+      <div class="card"><h3 class="acc">A favor</h3><ul class="dash" style="margin-top:8px">
+        <li><strong>Privacidad:</strong> los datos no salen de la máquina (útil con datos de clientes o de alumnos)</li>
+        <li><strong>Costo marginal cero:</strong> clasificar o resumir miles de documentos no suma factura</li>
+        <li><strong>Offline</strong> y sin límites de uso de un proveedor</li>
+        <li><strong>Control:</strong> versión fija del modelo, fine-tuning propio</li></ul></div>
+      <div class="card"><h3>En contra</h3><ul class="dash" style="margin-top:8px">
+        <li><strong>Calidad:</strong> los modelos que entran en una laptop quedan lejos de los de frontera en tareas agénticas largas</li>
+        <li><strong>Hardware:</strong> la memoria (RAM o VRAM) define qué podés correr</li>
+        <li><strong>Velocidad:</strong> depende del ancho de banda de memoria, no solo de la GPU</li>
+        <li><strong>Mantenimiento:</strong> actualizar, configurar contexto y servir es tarea tuya</li></ul></div>
+    </div>
+    <div class="grid g4" style="margin-top:16px">
+      <div class="card beige"><h3>Ollama</h3><p>CLI y servidor local con API en el puerto 11434. El más simple para empezar.</p></div>
+      <div class="card beige"><h3>LM Studio</h3><p>App de escritorio con interfaz gráfica y servidor compatible con APIs populares.</p></div>
+      <div class="card beige"><h3>llama.cpp</h3><p>El motor de bajo nivel detrás de muchos: formato GGUF y máxima configuración.</p></div>
+      <div class="card beige"><h3>MLX</h3><p>Framework de Apple optimizado para Apple Silicon (memoria unificada).</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: documentación de cada herramienta (oct. 2026)</span><span class="num"></span></div>
+</section>
+
+<!-- 24 CUANTIZACIÓN Y MEMORIA -->
+<section class="slide" data-title="Cuantización y memoria">
+  <div class="kicker">LLM locales</div>
+  <h2>Cuantización: cuánta memoria necesita un modelo</h2>
+  <p class="lead">Cuantizar es guardar cada parámetro con menos bits. Una regla útil: memoria ≈ parámetros × bytes por parámetro, más un 20–30% extra para el contexto (KV cache).</p>
+  <div class="body">
+    <div class="grid g2" style="align-items:start">
+      <div class="card">
+        <h3>Un modelo de 8B según la precisión</h3>
+        <p style="margin-bottom:14px">Bajar de 16 a ~4,8 bits por parámetro reduce la memoria a menos de un tercio, con una pérdida de calidad pequeña.</p>
+        <div class="bars">
+          <div class="bar"><span class="lbl">FP16<small>2 bytes/param</small></span><span class="track"><span class="fill alt" style="width:100%"></span></span><span class="val">16 GB</span></div>
+          <div class="bar"><span class="lbl">Q8<small>~1 byte/param</small></span><span class="track"><span class="fill alt" style="width:53%"></span></span><span class="val">8,5 GB</span></div>
+          <div class="bar"><span class="lbl">Q4_K_M<small>~0,6 GB por B</small></span><span class="track"><span class="fill" style="width:30%"></span></span><span class="val">4,8 GB</span></div>
+        </div>
+        <p class="small" style="margin-top:14px">Solo pesos, sin contexto. Q4_K_M es el punto de partida habitual en Ollama.</p>
+      </div>
+      <div class="card">
+        <h3>Modelos en Q4: tamaño aproximado</h3>
+        <p style="margin-bottom:14px">Estimado a ~0,6 GB por billón de parámetros; los de Qwen3.6, medidos en la librería de Ollama.</p>
+        <div class="bars">
+          <div class="bar"><span class="lbl">8B</span><span class="track"><span class="fill" style="width:11.4%"></span></span><span class="val">~5 GB</span></div>
+          <div class="bar"><span class="lbl">14B</span><span class="track"><span class="fill" style="width:20%"></span></span><span class="val">~8,5 GB</span></div>
+          <div class="bar"><span class="lbl">Qwen3.6 27B</span><span class="track"><span class="fill" style="width:44%"></span></span><span class="val">~19 GB</span></div>
+          <div class="bar"><span class="lbl">Qwen3.6 35B-A3B<small>MoE</small></span><span class="track"><span class="fill" style="width:56%"></span></span><span class="val">~24 GB</span></div>
+          <div class="bar"><span class="lbl">70B</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">~42 GB</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout beige" style="margin-top:12px"><strong>MoE (Mixture of Experts):</strong> Qwen3.6 35B-A3B tiene 35B de parámetros pero activa solo 3B por token. Necesita memoria para los 35B, pero genera casi a la velocidad de un modelo de 3B. En una Mac, la memoria unificada se comparte con el sistema: de 32 GB no quedan 32 para el modelo.</div>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://ollama.com/library/qwen3.6" target="_blank" rel="noopener">ollama.com/library/qwen3.6</a> · <a href="https://benchlm.ai/best/ollama-models" target="_blank" rel="noopener">BenchLM — Best Ollama models</a> (regla de ~0,6 GB por B en Q4_K_M, oct. 2026)</span><span class="num"></span></div>
+</section>
+
+<!-- 25 QUÉ MODELO SEGÚN HARDWARE -->
+<section class="slide" data-title="Modelo según hardware">
+  <div class="kicker">LLM locales</div>
+  <h2>Qué modelo entra en tu hardware</h2>
+  <p class="lead">El factor que manda es la memoria disponible para la GPU (VRAM) o la memoria unificada en una Mac. Esta es una guía de partida a octubre de 2026; el panorama cambia cada pocos meses.</p>
+  <div class="body">
+    <div class="tablewrap"><table class="t">
+      <thead><tr><th style="width:24%">Hardware</th><th style="width:30%">Modelos que entran (Q4)</th><th>Para qué alcanza</th></tr></thead>
+      <tbody>
+        <tr><td>GPU de 8 GB · laptop de 16 GB</td><td>7–12B, por ejemplo Gemma 4 12B</td><td>Chat, resúmenes, clasificación, embeddings y autocompletado</td></tr>
+        <tr><td>GPU de 24 GB · Mac de 32 GB</td><td>Qwen3.6 27B (~19 GB) o 35B-A3B MoE (~24 GB)</td><td>Coding local razonable; el mejor punto calidad/hardware hoy</td></tr>
+        <tr><td>Mac de 64–128 GB · 2 GPUs</td><td>70B densos o MoE medianos</td><td>Calidad cercana a modelos cloud de gama media</td></tr>
+        <tr><td>Servidor multi-GPU (8× H100)</td><td>Kimi K2.6, GLM-5.x, DeepSeek</td><td>Open-weight de frontera, para self-hosting empresarial</td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid g3" style="margin-top:14px">
+      <div class="card"><h3>Contexto</h3><p>Para usar un modelo como agente de código, Ollama recomienda 64K tokens de contexto o más. Más contexto = más memoria.</p></div>
+      <div class="card"><h3>Herramientas</h3><p>Para tareas agénticas el modelo tiene que soportar tool calling. Revisá las capacidades en la ficha del modelo.</p></div>
+      <div class="card"><h3>Expectativas</h3><p>Un modelo más chico que responde rápido suele servir más que uno grande que satura la memoria.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://benchlm.ai/best/ollama-models" target="_blank" rel="noopener">BenchLM — Best Ollama models</a> (oct. 2026) · <a href="https://docs.ollama.com/integrations/claude-code" target="_blank" rel="noopener">docs.ollama.com</a></span><span class="num"></span></div>
+</section>
+
+<!-- 26 OLLAMA EN PRÁCTICA -->
+<section class="slide" data-title="Ollama en práctica">
+  <div class="kicker">LLM locales</div>
+  <h2>Ollama en la práctica (y conectado a Claude Code)</h2>
+  <p class="lead">Ollama descarga el modelo, lo sirve en <code>localhost:11434</code> y expone una API propia y otra compatible con la de Anthropic.</p>
+  <div class="body">
+    <div class="grid g2" style="align-items:start">
+      <div class="codeblock"><span class="c"># descargar y probar un modelo</span>
+ollama pull qwen3.6:27b
+ollama run qwen3.6:27b <span class="s">"Explicá este stacktrace: ..."</span>
+ollama list            <span class="c"># modelos instalados</span>
+
+<span class="c"># API local: chat</span>
+curl http://localhost:11434/api/chat -d <span class="s">'{
+  "model": "qwen3.6:27b", "stream": false,
+  "messages": [{"role": "user", "content": "Hola"}]
+}'</span>
+
+<span class="c"># API local: embeddings (para RAG)</span>
+curl http://localhost:11434/api/embed -d <span class="s">'{
+  "model": "embeddinggemma", "input": "texto a indexar"
+}'</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="codeblock"><span class="c"># Claude Code con un modelo local</span>
+ollama launch claude
+
+<span class="c"># o configurándolo a mano</span>
+export ANTHROPIC_BASE_URL=http://localhost:11434
+export ANTHROPIC_AUTH_TOKEN=ollama
+export ANTHROPIC_API_KEY=<span class="s">""</span>
+claude --model qwen3.6:27b</div>
+        <div class="card"><h3>Lo que hay que saber</h3><ul class="dash">
+          <li>Configurá 64K de contexto o más para repos reales</li>
+          <li>El modelo tiene que soportar herramientas</li>
+          <li>WebSearch y algunos controles avanzados no funcionan</li>
+          <li>No es soporte oficial de Anthropic: rinde lo que rinda el modelo</li>
+          <li>Verificá la conexión con <code>/status</code></li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://docs.ollama.com/integrations/claude-code" target="_blank" rel="noopener">docs.ollama.com — Claude Code</a> · <a href="https://docs.ollama.com/capabilities/embeddings" target="_blank" rel="noopener">Embeddings</a></span><span class="num"></span></div>
+</section>
+
+<!-- 27 RAG PIPELINE -->
+<section class="slide" data-title="RAG: el pipeline">
+  <div class="kicker">RAG</div>
+  <h2>RAG: darle al modelo lo que no sabe</h2>
+  <p class="lead">Retrieval-Augmented Generation: en vez de esperar que el modelo “sepa” tu documentación, buscás los fragmentos relevantes y se los pasás en el prompt. El modelo responde con esa evidencia y puede citarla.</p>
+  <div class="body">
+    <svg class="diag" viewBox="0 0 1152 300" role="img" aria-label="Pipeline de RAG: indexación y consulta">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B9B2A0"/></marker>
+      <marker id="ara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker></defs>
+      <text x="0" y="18" font-size="11" font-weight="700" letter-spacing="2" fill="#6B6658">INDEXACIÓN · UNA VEZ O AL CAMBIAR LOS DOCUMENTOS</text>
+      <g font-size="13" font-weight="700" text-anchor="middle">
+        <rect x="0" y="34" width="180" height="62" rx="7" fill="#fff" stroke="#E4DDCC"/><text x="90" y="61" fill="#3D3929">Documentos</text><text x="90" y="80" font-size="10.5" font-weight="400" fill="#6B6658">PDF, Markdown, código</text>
+        <rect x="230" y="34" width="180" height="62" rx="7" fill="#fff" stroke="#E4DDCC"/><text x="320" y="61" fill="#3D3929">Chunking</text><text x="320" y="80" font-size="10.5" font-weight="400" fill="#6B6658">fragmentos con solapamiento</text>
+        <rect x="460" y="34" width="180" height="62" rx="7" fill="#fff" stroke="#E4DDCC"/><text x="550" y="61" fill="#3D3929">Embeddings</text><text x="550" y="80" font-size="10.5" font-weight="400" fill="#6B6658">texto → vector</text>
+        <rect x="690" y="34" width="200" height="62" rx="7" fill="#262624"/><text x="790" y="61" fill="#fff">Base vectorial</text><text x="790" y="80" font-size="10.5" font-weight="400" fill="#CFC8B8">pgvector, Chroma, Qdrant</text>
+      </g>
+      <g stroke="#B9B2A0" stroke-width="1.6" marker-end="url(#ar)"><line x1="182" y1="65" x2="226" y2="65"/><line x1="412" y1="65" x2="456" y2="65"/><line x1="642" y1="65" x2="686" y2="65"/></g>
+      <text x="0" y="148" font-size="11" font-weight="700" letter-spacing="2" fill="#6B6658">CONSULTA · EN CADA PREGUNTA</text>
+      <g font-size="13" font-weight="700" text-anchor="middle">
+        <rect x="0" y="164" width="150" height="62" rx="7" fill="#fff" stroke="#E4DDCC"/><text x="75" y="191" fill="#3D3929">Pregunta</text><text x="75" y="210" font-size="10.5" font-weight="400" fill="#6B6658">del usuario</text>
+        <rect x="190" y="164" width="150" height="62" rx="7" fill="#fff" stroke="#E4DDCC"/><text x="265" y="191" fill="#3D3929">Embedding</text><text x="265" y="210" font-size="10.5" font-weight="400" fill="#6B6658">mismo modelo</text>
+        <rect x="380" y="164" width="170" height="62" rx="7" fill="#F7E3DA" stroke="#D97757"/><text x="465" y="191" fill="#BD5D3A">Búsqueda top-k</text><text x="465" y="210" font-size="10.5" font-weight="400" fill="#6B6658">similitud + BM25</text>
+        <rect x="590" y="164" width="150" height="62" rx="7" fill="#F7E3DA" stroke="#D97757"/><text x="665" y="191" fill="#BD5D3A">Reranking</text><text x="665" y="210" font-size="10.5" font-weight="400" fill="#6B6658">opcional</text>
+        <rect x="780" y="164" width="170" height="62" rx="7" fill="#fff" stroke="#E4DDCC"/><text x="865" y="191" fill="#3D3929">Prompt + contexto</text><text x="865" y="210" font-size="10.5" font-weight="400" fill="#6B6658">fragmentos elegidos</text>
+        <rect x="990" y="164" width="160" height="62" rx="7" fill="#262624"/><text x="1070" y="191" fill="#fff">LLM</text><text x="1070" y="210" font-size="10.5" font-weight="400" fill="#CFC8B8">respuesta con citas</text>
+      </g>
+      <g stroke="#B9B2A0" stroke-width="1.6" marker-end="url(#ar)"><line x1="152" y1="195" x2="186" y2="195"/><line x1="342" y1="195" x2="376" y2="195"/><line x1="552" y1="195" x2="586" y2="195"/><line x1="742" y1="195" x2="776" y2="195"/><line x1="952" y1="195" x2="986" y2="195"/></g>
+      <path d="M790,98 L790,130 L465,130 L465,160" fill="none" stroke="#D97757" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ara)"/>
+      <text x="628" y="124" text-anchor="middle" font-size="11" fill="#BD5D3A" font-weight="700">busca en el índice</text>
+      <text x="0" y="276" font-size="12" fill="#6B6658">Claves: usar el mismo modelo de embeddings para indexar y para consultar · chunks de unos cientos de tokens · guardar la fuente de cada chunk para poder citarla.</text>
+    </svg>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://docs.ollama.com/capabilities/embeddings" target="_blank" rel="noopener">docs.ollama.com — Embeddings</a> · <a href="https://www.anthropic.com/engineering/contextual-retrieval" target="_blank" rel="noopener">Anthropic — Contextual retrieval</a></span><span class="num"></span></div>
+</section>
+
+<!-- 28 RAG CÓDIGO -->
+<section class="slide" data-title="RAG mínimo en Python">
+  <div class="kicker">RAG</div>
+  <h2>Un RAG mínimo, 100% local, en 25 líneas</h2>
+  <p class="lead">Ollama para embeddings y generación, NumPy como “base vectorial”. Alcanza para entender el mecanismo antes de sumar una base de datos real.</p>
+  <div class="body">
+    <div class="grid g-55-45" style="align-items:start">
+      <div class="codeblock sm"><span class="fn">rag.py</span><span class="k">import</span> requests, numpy <span class="k">as</span> np
+OLLAMA = <span class="s">"http://localhost:11434"</span>
+
+<span class="k">def</span> embed(textos):
+    r = requests.post(f<span class="s">"{OLLAMA}/api/embed"</span>,
+                      json={<span class="s">"model"</span>: <span class="s">"embeddinggemma"</span>, <span class="s">"input"</span>: textos})
+    <span class="k">return</span> np.array(r.json()[<span class="s">"embeddings"</span>])
+
+docs = [<span class="s">"La mora temprana abarca deudas de 0 a 90 días..."</span>,
+        <span class="s">"Los convenios de refinanciación se ofrecen cuando..."</span>,
+        <span class="s">"La derivación judicial aplica a deudas de más de un año..."</span>]
+D = embed(docs)                          <span class="c"># indexar: una sola vez</span>
+
+<span class="k">def</span> buscar(pregunta, k=2):
+    q = embed([pregunta])[0]
+    scores = D @ q                       <span class="c"># vectores normalizados → coseno</span>
+    <span class="k">return</span> [docs[i] <span class="k">for</span> i <span class="k">in</span> np.argsort(-scores)[:k]]
+
+pregunta = <span class="s">"¿Qué se hace con una deuda de 6 meses?"</span>
+contexto = <span class="s">"\n"</span>.join(buscar(pregunta))
+r = requests.post(f<span class="s">"{OLLAMA}/api/chat"</span>, json={
+    <span class="s">"model"</span>: <span class="s">"qwen3.6:27b"</span>, <span class="s">"stream"</span>: False,
+    <span class="s">"messages"</span>: [{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>:
+        f<span class="s">"Respondé solo con este contexto:\n{contexto}\n\nPregunta: {pregunta}"</span>}]})
+print(r.json()[<span class="s">"message"</span>][<span class="s">"content"</span>])</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card"><h3>Por qué el producto punto</h3><p>Ollama devuelve vectores normalizados (largo 1), así que <code>D @ q</code> ya es la similitud coseno de la pregunta contra cada documento.</p></div>
+        <div class="card"><h3>“Respondé solo con este contexto”</h3><p>Limitar al modelo a la evidencia recuperada reduce que invente. Pedile además que diga cuándo el contexto no alcanza.</p></div>
+        <div class="card beige"><h3>Para producción</h3><ul class="dash"><li>Base vectorial real: pgvector si ya usás PostgreSQL</li><li>Chunking por secciones, no por largo fijo</li><li>Guardar documento y página de cada chunk para citar</li><li>Un set de preguntas de prueba para medir aciertos</li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: API de <a href="https://docs.ollama.com/capabilities/embeddings" target="_blank" rel="noopener">docs.ollama.com</a> (<code>/api/embed</code>, <code>/api/chat</code>). Requiere <code>ollama pull embeddinggemma</code> y <code>pip install requests numpy</code>.</span><span class="num"></span></div>
+</section>
+
+<!-- 29 MEJORAR RETRIEVAL -->
+<section class="slide" data-title="Mejorar el retrieval">
+  <div class="kicker">RAG</div>
+  <h2>Mejorar el retrieval: híbrido, contextual y reranking</h2>
+  <p class="lead">La mayoría de las respuestas malas de un RAG vienen de recuperar el fragmento equivocado, no del modelo. Anthropic midió cuánto baja la tasa de fallos en la recuperación (top-20) al combinar técnicas:</p>
+  <div class="body">
+    <div class="grid g-55-45" style="align-items:start">
+      <div class="card">
+        <h3>Tasa de fallo en la recuperación</h3>
+        <p style="margin-bottom:16px">Menos es mejor. Promedio sobre varios dominios de prueba.</p>
+        <div class="bars">
+          <div class="bar"><span class="lbl">Embeddings<small>base</small></span><span class="track"><span class="fill alt" style="width:100%"></span></span><span class="val">5,7%</span></div>
+          <div class="bar"><span class="lbl">Contextuales</span><span class="track"><span class="fill" style="width:64.9%"></span></span><span class="val">3,7%</span></div>
+          <div class="bar"><span class="lbl">+ BM25<small>contextual</small></span><span class="track"><span class="fill" style="width:50.9%"></span></span><span class="val">2,9%</span></div>
+          <div class="bar"><span class="lbl">+ Reranking</span><span class="track"><span class="fill" style="width:33.3%"></span></span><span class="val">1,9%</span></div>
+        </div>
+        <p class="small" style="margin-top:16px">−35%, −49% y −67% de fallos respecto de la base.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card"><h3 class="acc">Búsqueda híbrida (BM25)</h3><p>Los embeddings captan significado; BM25 encuentra términos exactos como códigos de error, IDs o nombres de funciones. Combinados se cubren entre sí.</p></div>
+        <div class="card"><h3 class="acc">Contextual retrieval</h3><p>Antes de indexar, un LLM le agrega a cada chunk una o dos frases que lo ubican en su documento (“este fragmento es de la sección de mora tardía…”).</p></div>
+        <div class="card"><h3 class="acc">Reranking</h3><p>Un modelo reordena los mejores candidatos (por ejemplo 150) y te quedás con los más relevantes (por ejemplo 20).</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://www.anthropic.com/engineering/contextual-retrieval" target="_blank" rel="noopener">Anthropic — Introducing Contextual Retrieval</a></span><span class="num"></span></div>
+</section>
+
+<!-- 30 RAG vs CONTEXTO vs FT -->
+<section class="slide" data-title="Contexto largo vs RAG vs fine-tuning">
+  <div class="kicker">Decidir</div>
+  <h2>¿Contexto largo, RAG o fine-tuning?</h2>
+  <p class="lead">Las tres le dan al modelo algo que no trae de fábrica, pero resuelven problemas distintos. Muchas veces la respuesta correcta es la más simple.</p>
+  <div class="body">
+    <div class="tablewrap"><table class="t">
+      <thead><tr><th style="width:18%"></th><th style="width:27%">Contexto largo + caching</th><th style="width:27%">RAG</th><th>Fine-tuning (LoRA)</th></tr></thead>
+      <tbody>
+        <tr><td>Cuándo</td><td>La base entra en el prompt (menos de ~200K tokens)</td><td>Base grande o que cambia seguido</td><td>Cambiar estilo, formato o comportamiento</td></tr>
+        <tr><td>Conocimiento nuevo</td><td>Sí, todo en el prompt</td><td>Sí, lo relevante en cada consulta</td><td>Malo para hechos; bueno para formas</td></tr>
+        <tr><td>Actualizar datos</td><td>Editar el prompt</td><td>Reindexar los documentos que cambiaron</td><td>Volver a entrenar</td></tr>
+        <tr><td>Esfuerzo inicial</td><td>Casi nulo</td><td>Medio: pipeline e índice</td><td>Alto: dataset curado y GPU</td></tr>
+        <tr><td>Riesgo típico</td><td>Costo por turno si no usás caché</td><td>Recuperar el fragmento equivocado</td><td>Sobreajuste y olvido de capacidades</td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="callout">Probá en este orden: <strong>mejor prompt</strong> → <strong>contexto largo con caching</strong> → <strong>RAG</strong> → <strong>fine-tuning</strong>. Pasá al siguiente solo cuando el anterior no alcance.</div>
+      <div class="callout beige">Anthropic sugiere directamente saltear el RAG si tu base de conocimiento tiene menos de 200.000 tokens: ponela entera en el prompt y usá prompt caching.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuentes: <a href="https://www.anthropic.com/engineering/contextual-retrieval" target="_blank" rel="noopener">Anthropic — Contextual Retrieval</a> · Parte 1, diapositiva 33 (prompt caching)</span><span class="num"></span></div>
+</section>
+
+<!-- 31 FINE-TUNING LORA -->
+<section class="slide" data-title="Fine-tuning con LoRA">
+  <div class="kicker">Fine-tuning</div>
+  <h2>Fine-tuning con LoRA y QLoRA</h2>
+  <p class="lead">LoRA congela los pesos del modelo y entrena solo unas matrices chicas (adaptadores) que se suman a ciertas capas. QLoRA hace lo mismo sobre el modelo cargado en 4 bits, y así entra en una sola GPU.</p>
+  <div class="body">
+    <div class="grid g-55-45" style="align-items:start">
+      <div class="card">
+        <h3>VRAM mínima para entrenar, por tamaño de modelo</h3>
+        <div class="legend" style="margin-top:8px"><span><i style="background:var(--accent)"></i>QLoRA (4 bits)</span><span><i style="background:var(--ink)"></i>LoRA (16 bits)</span></div>
+        <div class="bars dbl">
+          <div class="bar"><span class="lbl">3B</span><span class="pair"><span class="track"><span class="fill" style="width:2.1%"></span></span><span class="track"><span class="fill alt" style="width:4.9%"></span></span></span><span class="val">3,5 / 8</span></div>
+          <div class="bar"><span class="lbl">8B</span><span class="pair"><span class="track"><span class="fill" style="width:3.7%"></span></span><span class="track"><span class="fill alt" style="width:13.4%"></span></span></span><span class="val">6 / 22</span></div>
+          <div class="bar"><span class="lbl">14B</span><span class="pair"><span class="track"><span class="fill" style="width:5.2%"></span></span><span class="track"><span class="fill alt" style="width:20.1%"></span></span></span><span class="val">8,5 / 33</span></div>
+          <div class="bar"><span class="lbl">32B</span><span class="pair"><span class="track"><span class="fill" style="width:15.9%"></span></span><span class="track"><span class="fill alt" style="width:46.3%"></span></span></span><span class="val">26 / 76</span></div>
+          <div class="bar"><span class="lbl">70B</span><span class="pair"><span class="track"><span class="fill" style="width:25%"></span></span><span class="track"><span class="fill alt" style="width:100%"></span></span></span><span class="val">41 / 164</span></div>
+        </div>
+        <p class="small" style="margin-top:12px">GB de VRAM, mínimos según Unsloth. Un 8B con QLoRA entra en una GPU de consumo.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card"><h3>El flujo</h3><ul class="dash"><li>Dataset de cientos a miles de ejemplos de entrada/salida, de buena calidad</li><li>Entrenar el adaptador (Unsloth, o Hugging Face PEFT + TRL)</li><li>Evaluar contra ejemplos que no usaste para entrenar</li><li>Exportar a GGUF y servirlo con Ollama</li></ul></div>
+        <div class="card beige"><h3>Sirve para</h3><p>Fijar un formato de salida, un tono, un dominio con jerga propia o una tarea muy repetida con un modelo chico y barato.</p></div>
+        <div class="card"><h3>No sirve para</h3><p>Enseñarle datos que cambian: para eso, RAG.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Fuente: <a href="https://unsloth.ai/docs/get-started/fine-tuning-for-beginners/unsloth-requirements.md" target="_blank" rel="noopener">Unsloth — Requirements</a> (VRAM mínima)</span><span class="num"></span></div>
+</section>
+
+<!-- 32 RESUMEN -->
+<section class="slide" data-title="Resumen">
+  <div class="kicker">Cierre</div>
+  <h2>Resumen de la Parte 2</h2>
+  <div class="body" style="margin-top:8px">
+    <div class="checks">
+      <div class="check"><span class="tick">✓</span><div>CLAUDE.md para lo que aplica siempre, skills para lo que se hace a veces, hooks para lo que tiene que pasar sí o sí</div></div>
+      <div class="check"><span class="tick">✓</span><div>Las skills escalan por carga progresiva: solo la descripción ocupa contexto hasta que se usan</div></div>
+      <div class="check"><span class="tick">✓</span><div>Un hook con <code>exit 2</code> bloquea la acción y le explica a Claude por qué</div></div>
+      <div class="check"><span class="tick">✓</span><div>Un plugin empaqueta skills, agentes, hooks y MCP; corre con tus permisos, así que revisalo</div></div>
+      <div class="check"><span class="tick">✓</span><div>Empezá con un workflow o un solo agente; sumá subagentes o equipos solo si mejora el resultado</div></div>
+      <div class="check"><span class="tick">✓</span><div>Subagentes para tareas acotadas, agent teams para colaborar, worktrees para no pisar archivos</div></div>
+      <div class="check"><span class="tick">✓</span><div>En local, la memoria manda: ~0,6 GB por billón de parámetros en Q4, más el contexto</div></div>
+      <div class="check"><span class="tick">✓</span><div>Prompt → contexto largo con caching → RAG → fine-tuning, en ese orden</div></div>
+    </div>
+  </div>
+  <div class="foot"><span></span><span class="num"></span></div>
+</section>
+
+<!-- 33 CIERRE -->
+<section class="slide dark" data-title="Preguntas y recursos">
+  <div class="kicker">Gracias</div>
+  <h2>Preguntas y recursos</h2>
+  <div class="body" style="margin-top:10px">
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <a class="card dk" style="text-decoration:none;border-color:#4a4640" href="https://code.claude.com/docs/en/skills" target="_blank" rel="noopener"><h3>Skills, hooks y plugins →</h3><p>code.claude.com/docs</p></a>
+        <a class="card dk" style="text-decoration:none;border-color:#4a4640" href="https://code.claude.com/docs/en/agent-sdk/overview" target="_blank" rel="noopener"><h3>Claude Agent SDK y agent teams →</h3><p>code.claude.com/docs/en/agent-sdk</p></a>
+        <a class="card dk" style="text-decoration:none;border-color:#4a4640" href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener"><h3>Patrones de agentes y contextual retrieval →</h3><p>anthropic.com/engineering</p></a>
+        <a class="card dk" style="text-decoration:none;border-color:#4a4640" href="https://docs.ollama.com" target="_blank" rel="noopener"><h3>Modelos locales →</h3><p>docs.ollama.com · huggingface.co</p></a>
+      </div>
+      <div class="card" style="background:#2F2C29;border-color:#4a4640">
+        <span class="tag" style="background:#4a3a32;color:#F2B8A0">Práctica para después del taller</span>
+        <ul class="dash" style="margin-top:6px">
+          <li style="color:#E8E3D6">Convertí un prompt que repetís seguido en una skill de proyecto, con una descripción tipo “usala cuando…”.</li>
+          <li style="color:#E8E3D6">Agregá un hook PostToolUse que formatee después de cada edición y uno PreToolUse que proteja tu <code>.env</code>.</li>
+          <li style="color:#E8E3D6">Pedile a Claude Code un equipo de 3 teammates para revisar un PR real y compará el resultado con una sola sesión.</li>
+          <li style="color:#E8E3D6">Armá el RAG de la diapositiva 28 con la documentación de tu proyecto y anotá en cuántas preguntas recupera el fragmento correcto.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span></span><span class="num"></span></div>
+</section>
+
+</div></div>
+
+<div id="nav">
+  <button id="prev" aria-label="Diapositiva anterior">‹</button>
+  <span class="count" id="count" title="← → para navegar · F pantalla completa">1 / 1</span>
+  <button id="next" aria-label="Diapositiva siguiente">›</button>
+</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage');
+  var count = document.getElementById('count');
+  var bar = document.getElementById('progress');
+  var total = slides.length, cur = 0;
+
+  slides.forEach(function(s,i){
+    var n = s.querySelector('.num');
+    if(n){ n.textContent = String(i+1).padStart(2,'0'); }
+    s.setAttribute('aria-label', (i+1) + ' de ' + total + ': ' + (s.dataset.title||''));
+  });
+
+  var mq = window.matchMedia('(max-width: 820px)');
+  function isDoc(){ return document.body.classList.contains('doc'); }
+  function applyMode(){
+    document.body.classList.toggle('doc', mq.matches);
+    fit();
+  }
+  function fit(){
+    if(isDoc()){ stage.style.transform=''; return; }
+    var s = Math.min(window.innerWidth/1280, window.innerHeight/720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  function show(i, push){
+    cur = Math.max(0, Math.min(total-1, i));
+    slides.forEach(function(s,k){ s.classList.toggle('active', k===cur); });
+    count.textContent = (cur+1) + ' / ' + total;
+    bar.style.width = ((cur+1)/total*100) + '%';
+    if(push !== false){ try{ history.replaceState(null,'','#'+(cur+1)); }catch(e){} }
+  }
+  function fromHash(){
+    var n = parseInt((location.hash||'').replace('#',''),10);
+    return isNaN(n) ? 0 : n-1;
+  }
+
+  document.getElementById('prev').addEventListener('click', function(){ show(cur-1); });
+  document.getElementById('next').addEventListener('click', function(){ show(cur+1); });
+  document.addEventListener('keydown', function(e){
+    if(isDoc()) return;
+    var k = e.key;
+    if(k==='ArrowRight'||k==='PageDown'||k===' '||k==='Enter'){ e.preventDefault(); show(cur+1); }
+    else if(k==='ArrowLeft'||k==='PageUp'||k==='Backspace'){ e.preventDefault(); show(cur-1); }
+    else if(k==='Home'){ show(0); }
+    else if(k==='End'){ show(total-1); }
+    else if(k==='f'||k==='F'){
+      if(!document.fullscreenElement){ (document.documentElement.requestFullscreen||function(){}).call(document.documentElement); }
+      else { document.exitFullscreen(); }
+    }
+  });
+  var tx=null;
+  document.addEventListener('touchstart', function(e){ tx = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if(isDoc()||tx===null) return;
+    var dx = e.changedTouches[0].clientX - tx;
+    if(Math.abs(dx)>50){ show(cur + (dx<0?1:-1)); }
+    tx=null;
+  });
+  window.addEventListener('resize', fit);
+  window.addEventListener('hashchange', function(){ show(fromHash(), false); });
+  if(mq.addEventListener){ mq.addEventListener('change', applyMode); } else if(mq.addListener){ mq.addListener(applyMode); }
+
+  var idleT;
+  function wake(){ document.body.classList.remove('idle'); clearTimeout(idleT); idleT=setTimeout(function(){ document.body.classList.add('idle'); }, 2500); }
+  ['mousemove','touchstart','keydown'].forEach(function(ev){ document.addEventListener(ev, wake, {passive:true}); });
+  wake();
+
+  applyMode();
+  show(fromHash(), false);
+})();
+</script>
+</body>
+</html>
